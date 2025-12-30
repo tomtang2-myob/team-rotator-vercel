@@ -54,6 +54,7 @@ npm run dev
 ```
 
 **Get credentials:**
+
 - `EDGE_CONFIG`: [Vercel Dashboard](https://vercel.com/dashboard) → Project → Storage → Edge Config
 - `VERCEL_ACCESS_TOKEN`: [Vercel Account Settings](https://vercel.com/account/tokens) → Create Token
 
@@ -64,6 +65,7 @@ npm run dev
 ## Features
 
 ### Member Management
+
 - View all team members with Slack integration
 - Add new team members with name and Slack member ID
 - Edit existing member information
@@ -71,6 +73,7 @@ npm run dev
 - Member list sorted by ID for consistent rotation order
 
 ### Task Management
+
 - View all tasks with their rotation rules
 - Add new tasks with configurable rotation patterns
 - Edit existing task details
@@ -81,6 +84,7 @@ npm run dev
   - **Biweekly**: Rotates every two weeks (e.g., `biweekly_thursday`)
 
 ### Task Assignment
+
 - **Automatic rotation** based on configurable rules and working days
 - **Manual rotation trigger** via UI or API
 - **Slack notifications** for new assignments
@@ -89,6 +93,7 @@ npm run dev
 - Weekend-aware rotation (skips weekends automatically)
 
 ### System Management
+
 - Configure Slack webhook URL
 - View system logs with filtering
 - Manual and automatic rotation triggers
@@ -98,19 +103,19 @@ npm run dev
 
 ## Technology Stack
 
-| Category | Technology |
-|----------|-----------|
-| **Framework** | Next.js 13+ (App Router) |
-| **UI Library** | Material-UI (MUI) + Tailwind CSS |
-| **State Management** | TanStack Query (React Query) |
-| **Data Storage** | Vercel Edge Config |
-| **API** | Next.js API Routes |
-| **Deployment** | Vercel |
-| **Date Handling** | date-fns |
-| **HTTP Client** | Axios |
-| **Logging** | Custom logger with in-memory storage |
-| **Script Runner** | tsx (TypeScript execution) |
-| **Environment** | dotenv-cli, cross-env |
+| Category             | Technology                           |
+| -------------------- | ------------------------------------ |
+| **Framework**        | Next.js 13+ (App Router)             |
+| **UI Library**       | Material-UI (MUI) + Tailwind CSS     |
+| **State Management** | TanStack Query (React Query)         |
+| **Data Storage**     | Vercel Edge Config                   |
+| **API**              | Next.js API Routes                   |
+| **Deployment**       | Vercel                               |
+| **Date Handling**    | date-fns                             |
+| **HTTP Client**      | Axios                                |
+| **Logging**          | Custom logger with in-memory storage |
+| **Script Runner**    | tsx (TypeScript execution)           |
+| **Environment**      | dotenv-cli, cross-env                |
 
 ---
 
@@ -197,6 +202,7 @@ team-rotator-vercel/
 ### Installation
 
 1. **Clone the repository:**
+
    ```bash
    git clone <repository-url>
    cd team-rotator-vercel
@@ -252,6 +258,7 @@ NEXT_PUBLIC_USE_EDGE_CONFIG=true
 ```
 
 **Important Notes:**
+
 - ⚠️ **Do not use inline comments** in `.env.local` (comments must be on separate lines)
 - ✅ Each variable should be on its own line
 - ✅ No trailing spaces or comments after the values
@@ -269,6 +276,7 @@ npm run migrate
 ```
 
 This will:
+
 - ✅ Read JSON files from `data/` folder
 - ✅ Upload them to Edge Config
 - ✅ Validate the connection
@@ -290,6 +298,7 @@ This will:
 The `.env.local` file **must follow strict formatting rules**:
 
 **✅ Correct Format:**
+
 ```bash
 # Comment on its own line
 EDGE_CONFIG=https://edge-config.vercel.com/ecfg_xxx?token=xxx
@@ -300,6 +309,7 @@ NEXT_PUBLIC_USE_EDGE_CONFIG=true
 ```
 
 **❌ Incorrect Format (Will Fail):**
+
 ```bash
 # DO NOT DO THIS:
 VERCEL_ACCESS_TOKEN=your_token  # inline comment ❌
@@ -308,6 +318,7 @@ EDGE_CONFIG="https://..."  # quotes not needed ❌
 ```
 
 **Rules:**
+
 - ✅ Comments must be on their own line
 - ✅ No spaces around the `=` sign
 - ✅ No quotes around values (unless the value itself contains quotes)
@@ -351,6 +362,7 @@ The rotation system automatically manages task assignments based on rotation rul
 ```
 
 **Key Components:**
+
 - `src/lib/rotation.ts` - Core rotation logic
 - `src/lib/holiday.ts` - Working day validation
 - `src/services/assignments.ts` - Assignment orchestration
@@ -420,6 +432,7 @@ How Slack notifications are sent:
 ```
 
 **Key Files:**
+
 - `src/services/assignments.ts` - Notification logic
 - `src/app/api/assignments/send-to-slack/route.ts` - API endpoint
 
@@ -430,16 +443,19 @@ How Slack notifications are sent:
 ### Running Locally
 
 1. **Start the development server:**
+
    ```bash
    npm run dev
    ```
-   
+
    This automatically:
+
    - ✅ Loads environment variables from `.env.local`
    - ✅ Disables SSL verification for local development
    - ✅ Uses Edge Config if `NEXT_PUBLIC_USE_EDGE_CONFIG=true`
 
 2. **Open your browser:**
+
    ```
    http://localhost:3000
    ```
@@ -455,21 +471,27 @@ How Slack notifications are sent:
 The app supports two development modes:
 
 #### **Option 1: Using Edge Config (Recommended)**
+
 Set in `.env.local`:
+
 ```bash
 NEXT_PUBLIC_USE_EDGE_CONFIG=true
 ```
+
 - ✅ Uses real Edge Config data
 - ✅ Data persists between restarts
 - ✅ Matches production behavior
 - ✅ Multiple team members can share data
 
 #### **Option 2: In-Memory Cache**
+
 Set in `.env.local`:
+
 ```bash
 NEXT_PUBLIC_USE_EDGE_CONFIG=false
 # or don't set it at all
 ```
+
 - ✅ Fast local development
 - ❌ Data resets on server restart
 - ❌ Each team member has separate data
@@ -477,17 +499,17 @@ NEXT_PUBLIC_USE_EDGE_CONFIG=false
 
 ### Available Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server on port 3000 (with SSL bypass for local) |
-| `npm run dev:secure` | Start development server with SSL verification enabled |
-| `npm run build` | Build for production |
-| `npm start` | Start production server |
-| `npm run lint` | Run ESLint |
-| `npm run test-edge-config` | Test Edge Config connection (loads `.env.local`) |
-| `npm run migrate` | Migrate local data to Edge Config (loads `.env.local`) |
-| `npm run clear-edge-config` | Clear all Edge Config data (loads `.env.local`) |
-| `npm run export-data` | Export Edge Config data to local files (loads `.env.local`) |
+| Command                     | Description                                                       |
+| --------------------------- | ----------------------------------------------------------------- |
+| `npm run dev`               | Start development server on port 3000 (with SSL bypass for local) |
+| `npm run dev:secure`        | Start development server with SSL verification enabled            |
+| `npm run build`             | Build for production                                              |
+| `npm start`                 | Start production server                                           |
+| `npm run lint`              | Run ESLint                                                        |
+| `npm run test-edge-config`  | Test Edge Config connection (loads `.env.local`)                  |
+| `npm run migrate`           | Migrate local data to Edge Config (loads `.env.local`)            |
+| `npm run clear-edge-config` | Clear all Edge Config data (loads `.env.local`)                   |
+| `npm run export-data`       | Export Edge Config data to local files (loads `.env.local`)       |
 
 **Note:** All scripts automatically load environment variables from `.env.local` using `dotenv-cli`.
 
@@ -502,11 +524,13 @@ npm run test-edge-config
 ```
 
 This script will:
+
 1. ✅ List all Edge Configs in your account
 2. ✅ Retrieve all items from your Edge Config
 3. ✅ Test write operation (update an item)
 
 **Expected Output:**
+
 ```
 Getting all Edge Configs...
 [{"id":"ecfg_xxx","slug":"team-rotator-vercel-store",...}]
@@ -518,43 +542,15 @@ Updating specific item...
 {"status":"ok"}
 ```
 
-#### Manual Testing Checklist
-
-**Member Management:**
-- [ ] Add a new member
-- [ ] Edit member details
-- [ ] Delete a member
-- [ ] Verify member list updates
-
-**Task Management:**
-- [ ] Create task with daily rule
-- [ ] Create task with weekly rule
-- [ ] Create task with biweekly rule
-- [ ] Edit task rotation rule
-- [ ] Delete a task
-
-**Assignment & Rotation:**
-- [ ] View current assignments on dashboard
-- [ ] Manually trigger rotation
-- [ ] Verify assignments update correctly
-- [ ] Check rotation respects working days
-- [ ] Verify member rotation order
-
-**Slack Integration:**
-- [ ] Configure webhook in settings
-- [ ] Send test notification
-- [ ] Verify message format in Slack
-- [ ] Check @mentions work correctly
-
 #### Testing Holiday Logic
 
 The app uses the [holiday-cn](https://github.com/NateScarlet/holiday-cn) API for Chinese holidays:
 
 ```typescript
 // Test if a date is a working day
-import { isWorkingDay } from '@/lib/holiday';
+import { isWorkingDay } from "@/lib/holiday";
 
-const date = new Date('2025-01-01'); // New Year's Day
+const date = new Date("2025-01-01"); // New Year's Day
 const result = await isWorkingDay(date);
 console.log(result); // false (holiday)
 ```
@@ -568,20 +564,22 @@ console.log(result); // false (holiday)
 All data is stored in Vercel Edge Config with the following keys:
 
 #### `members` (Array)
+
 ```typescript
 interface Member {
-  id: number;              // Unique identifier
-  host: string;            // Display name
-  slackMemberId: string;   // Slack user ID (format: U12345678)
+  id: number; // Unique identifier
+  host: string; // Display name
+  slackMemberId: string; // Slack user ID (format: U12345678)
 }
 ```
 
 #### `tasks` (Array)
+
 ```typescript
 interface Task {
-  id: number;              // Unique identifier
-  name: string;            // Task name
-  rotationRule: string;    // Rotation pattern
+  id: number; // Unique identifier
+  name: string; // Task name
+  rotationRule: string; // Rotation pattern
   // Examples:
   // - "daily"
   // - "weekly_friday"
@@ -590,32 +588,34 @@ interface Task {
 ```
 
 #### `taskAssignments` (Array)
+
 ```typescript
 interface TaskAssignment {
-  id: number;              // Unique identifier
-  taskId: number;          // Reference to Task.id
-  memberId: number;        // Reference to Member.id
-  startDate: string;       // ISO date string (YYYY-MM-DD)
-  endDate: string;         // ISO date string (YYYY-MM-DD)
+  id: number; // Unique identifier
+  taskId: number; // Reference to Task.id
+  memberId: number; // Reference to Member.id
+  startDate: string; // ISO date string (YYYY-MM-DD)
+  endDate: string; // ISO date string (YYYY-MM-DD)
 }
 ```
 
 #### `systemConfigs` (Array)
+
 ```typescript
 interface SystemConfig {
-  key: string;             // Config key (e.g., "Slack:WebhookUrl")
-  value: string;           // Config value
-  lastModified: string;    // ISO timestamp
+  key: string; // Config key (e.g., "Slack:WebhookUrl")
+  value: string; // Config value
+  lastModified: string; // ISO timestamp
   modifiedBy: string | null;
 }
 ```
 
 ### Rotation Rules Explained
 
-| Rule | Format | Behavior | Example |
-|------|--------|----------|---------|
-| **Daily** | `"daily"` | Rotates every working day | English word task |
-| **Weekly** | `"weekly_<day>"` | Rotates weekly on specified day | `weekly_friday` for Standup |
+| Rule         | Format             | Behavior                               | Example                                |
+| ------------ | ------------------ | -------------------------------------- | -------------------------------------- |
+| **Daily**    | `"daily"`          | Rotates every working day              | English word task                      |
+| **Weekly**   | `"weekly_<day>"`   | Rotates weekly on specified day        | `weekly_friday` for Standup            |
 | **Biweekly** | `"biweekly_<day>"` | Rotates every 2 weeks on specified day | `biweekly_thursday` for English corner |
 
 **Valid days:** `monday`, `tuesday`, `wednesday`, `thursday`, `friday`, `saturday`, `sunday`
@@ -623,15 +623,19 @@ interface SystemConfig {
 ### Importing/Exporting Data
 
 **Export current data:**
+
 ```bash
 npm run export-data
 ```
+
 This creates JSON files in the `data/` directory.
 
 **Import data to Edge Config:**
+
 ```bash
 npm run migrate
 ```
+
 This reads from `data/*.json` and uploads to Edge Config.
 
 ---
@@ -643,16 +647,20 @@ The application includes an **automated cron job** that runs daily to check and 
 ### Schedule Configuration
 
 From `vercel.json`:
+
 ```json
 {
-  "crons": [{
-    "path": "/api/cron",
-    "schedule": "0 0 * * *"
-  }]
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "0 0 * * *"
+    }
+  ]
 }
 ```
 
 **Schedule Breakdown:**
+
 ```
 0 0 * * *
 │ │ │ │ │
@@ -666,6 +674,7 @@ From `vercel.json`:
 ```
 
 **When it runs:**
+
 - ⏰ **Midnight UTC** (00:00) every day
 - 🇨🇳 **8:00 AM Beijing time** (UTC+8)
 - 🇺🇸 **5:00 PM PST** / **8:00 PM EST** (previous day)
@@ -818,6 +827,7 @@ isWorkingDay(2026-02-01)
 ### Rotation Rules in Action
 
 #### **1. Daily Rotation** (`daily`)
+
 ```javascript
 // Example: "English word" task
 {
@@ -834,6 +844,7 @@ isWorkingDay(2026-02-01)
 ```
 
 #### **2. Weekly Rotation** (`weekly_friday`)
+
 ```javascript
 // Example: "Standup" task
 {
@@ -850,6 +861,7 @@ isWorkingDay(2026-02-01)
 ```
 
 #### **3. Biweekly Rotation** (`biweekly_thursday`)
+
 ```javascript
 // Example: "English corner" task
 {
@@ -880,6 +892,7 @@ English corner: @AnPham
 ```
 
 **Note:** The "English word" task shows 3 days:
+
 - Current day's assignee
 - Next day's assignee (Day + 1)
 - Day after next (Day + 2)
@@ -891,15 +904,18 @@ This helps the team prepare in advance!
 You don't have to wait for the cron job. You can trigger rotation manually:
 
 **1. Via Dashboard UI:**
+
 - Go to http://localhost:3000
 - Click **"Update Rotation"** button
 
 **2. Via API:**
+
 ```bash
 curl https://your-app.vercel.app/api/cron
 ```
 
 **3. Via Vercel Dashboard:**
+
 - Go to your project → Deployments → Functions
 - Find cron function → Click **"Run"**
 
@@ -908,16 +924,19 @@ curl https://your-app.vercel.app/api/cron
 Every cron execution is logged for debugging:
 
 **View logs in your app:**
+
 ```
 http://localhost:3000 → System Logs tab
 ```
 
 **Or via API:**
+
 ```bash
 GET /api/logs
 ```
 
 **What's logged:**
+
 - Request ID (for tracking specific executions)
 - Execution timestamp
 - Working day check result
@@ -931,13 +950,13 @@ GET /api/logs
 
 The cron job respects these settings:
 
-| Setting | Value | Description |
-|---------|-------|-------------|
-| **Timeout** | 60 seconds | Maximum execution time |
+| Setting            | Value               | Description                                                  |
+| ------------------ | ------------------- | ------------------------------------------------------------ |
+| **Timeout**        | 60 seconds          | Maximum execution time                                       |
 | **Holiday Source** | Chinese Holiday API | From [holiday-cn](https://github.com/NateScarlet/holiday-cn) |
-| **Slack Webhook** | System Config | Configured in Settings page |
-| **Rotation Logic** | Task rotation rules | daily/weekly/biweekly |
-| **Member Order** | Sorted by ID | Ascending order (8, 10, 13, 14, 15, 16) |
+| **Slack Webhook**  | System Config       | Configured in Settings page                                  |
+| **Rotation Logic** | Task rotation rules | daily/weekly/biweekly                                        |
+| **Member Order**   | Sorted by ID        | Ascending order (8, 10, 13, 14, 15, 16)                      |
 
 ### Key Features
 
@@ -948,21 +967,24 @@ The cron job respects these settings:
 ✅ **Integrated** - Posts updates to Slack automatically  
 ✅ **Trackable** - Each execution has a unique request ID  
 ✅ **Holiday-Aware** - Respects Chinese public holidays  
-✅ **Circular** - Members rotate in a continuous loop  
+✅ **Circular** - Members rotate in a continuous loop
 
 ### Important Notes
 
-⚠️ **Cron jobs only work in production (Vercel deployment)**  
+⚠️ **Cron jobs only work in production (Vercel deployment)**
+
 - Local development doesn't support cron jobs
 - Use manual trigger for local testing
 - The cron endpoint is publicly accessible but safe to expose
 
-⚠️ **Timezone considerations**  
+⚠️ **Timezone considerations**
+
 - Cron runs at midnight UTC
 - Adjust your schedule if needed for your timezone
 - Use [crontab.guru](https://crontab.guru/) to test schedules
 
-⚠️ **Edge Config access**  
+⚠️ **Edge Config access**
+
 - Ensure production has correct environment variables
 - Both `EDGE_CONFIG` and `VERCEL_ACCESS_TOKEN` are required
 - Test with `npm run test-edge-config` before deploying
@@ -974,11 +996,13 @@ The cron job respects these settings:
 ### Members API
 
 **Get all members**
+
 ```http
 GET /api/members
 ```
 
 **Create member**
+
 ```http
 POST /api/members
 Content-Type: application/json
@@ -990,6 +1014,7 @@ Content-Type: application/json
 ```
 
 **Update member**
+
 ```http
 PUT /api/members
 Content-Type: application/json
@@ -1002,6 +1027,7 @@ Content-Type: application/json
 ```
 
 **Delete member**
+
 ```http
 DELETE /api/members?id=1
 ```
@@ -1009,11 +1035,13 @@ DELETE /api/members?id=1
 ### Tasks API
 
 **Get all tasks**
+
 ```http
 GET /api/tasks
 ```
 
 **Create task**
+
 ```http
 POST /api/tasks
 Content-Type: application/json
@@ -1025,6 +1053,7 @@ Content-Type: application/json
 ```
 
 **Update task**
+
 ```http
 PUT /api/tasks
 Content-Type: application/json
@@ -1037,6 +1066,7 @@ Content-Type: application/json
 ```
 
 **Delete task**
+
 ```http
 DELETE /api/tasks?id=1
 ```
@@ -1044,21 +1074,25 @@ DELETE /api/tasks?id=1
 ### Assignments API
 
 **Get all assignments**
+
 ```http
 GET /api/assignments
 ```
 
 **Trigger rotation**
+
 ```http
 POST /api/assignments/update-rotation
 ```
 
 **Send to Slack**
+
 ```http
 POST /api/assignments/send-to-slack
 ```
 
 **Fix assignment dates**
+
 ```http
 POST /api/assignments/fix-dates
 ```
@@ -1066,11 +1100,13 @@ POST /api/assignments/fix-dates
 ### Configuration API
 
 **Get system config**
+
 ```http
 GET /api/config
 ```
 
 **Update system config**
+
 ```http
 POST /api/config
 Content-Type: application/json
@@ -1086,16 +1122,19 @@ Content-Type: application/json
 ### System API
 
 **Trigger cron job manually**
+
 ```http
 GET /api/cron
 ```
 
 **View logs**
+
 ```http
 GET /api/logs
 ```
 
 **Clear logs**
+
 ```http
 DELETE /api/logs
 ```
@@ -1109,11 +1148,13 @@ DELETE /api/logs
 1. **Push code to Git repository** (GitHub, GitLab, or Bitbucket)
 
 2. **Import project to Vercel:**
+
    - Go to [Vercel Dashboard](https://vercel.com/dashboard)
    - Click **Add New** → **Project**
    - Import your repository
 
 3. **Configure Environment Variables:**
+
    - In Vercel project settings → **Environment Variables**
    - Add:
      - `EDGE_CONFIG`: Your Edge Config connection string
@@ -1130,16 +1171,19 @@ The cron job is configured in `vercel.json`:
 
 ```json
 {
-  "crons": [{
-    "path": "/api/cron",
-    "schedule": "0 0 * * *"
-  }]
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "0 0 * * *"
+    }
+  ]
 }
 ```
 
 This runs daily at midnight UTC (8:00 AM Beijing time).
 
 **To change the schedule:**
+
 - Modify the `schedule` field using [cron syntax](https://crontab.guru/)
 - Redeploy the application
 
@@ -1152,6 +1196,7 @@ This runs daily at midnight UTC (8:00 AM Beijing time).
 The `data/` folder is tracked in Git and should **only contain sample/placeholder data**, never real secrets:
 
 **✅ Safe to commit:**
+
 ```json
 {
   "key": "Slack:WebhookUrl",
@@ -1162,10 +1207,11 @@ The `data/` folder is tracked in Git and should **only contain sample/placeholde
 ```
 
 **❌ NEVER commit:**
+
 ```json
 {
   "key": "Slack:WebhookUrl",
-  "value": "https://hooks.slack.com/services/T02998537/B0970HFURLP/...",  // ❌ Real webhook
+  "value": "https://hooks.slack.com/services/T02998537/B0970HFURLP/...", // ❌ Real webhook
   "lastModified": "2025-07-29T02:27:47.569Z",
   "modifiedBy": null
 }
@@ -1174,11 +1220,13 @@ The `data/` folder is tracked in Git and should **only contain sample/placeholde
 ### Where to Store Real Secrets
 
 **Development (Local):**
+
 - ✅ Real webhook URL → Configure in Settings page after running `npm run dev`
 - ✅ Or manually update via Edge Config dashboard
 - ❌ Never store in `data/system_configs.json`
 
 **Production (Vercel):**
+
 - ✅ Real webhook URL → Configure in Settings page after deployment
 - ✅ Or update directly in Edge Config via Vercel dashboard
 - ✅ Environment variables → Vercel project settings
@@ -1186,6 +1234,7 @@ The `data/` folder is tracked in Git and should **only contain sample/placeholde
 ### If You Accidentally Committed a Secret
 
 **Option 1: Amend the last commit (if not pushed yet)**
+
 ```bash
 # Fix the file with placeholder
 # Then amend the commit
@@ -1195,6 +1244,7 @@ git push origin main
 ```
 
 **Option 2: Create a new commit (if push was blocked)**
+
 ```bash
 # GitHub already blocked the push, so just commit the fix
 git add data/system_configs.json
@@ -1203,6 +1253,7 @@ git push origin main
 ```
 
 **Option 3: Secret was already pushed**
+
 1. **Revoke the exposed secret immediately** (regenerate Slack webhook)
 2. Remove from history:
    ```bash
@@ -1220,6 +1271,7 @@ git push origin main
 #### ❌ "EDGE_CONFIG environment variable is not set"
 
 **Solution:**
+
 1. Create `.env.local` file in project root
 2. Add: `EDGE_CONFIG=your_connection_string`
 3. Restart development server
@@ -1228,6 +1280,7 @@ git push origin main
 #### ❌ "VERCEL_ACCESS_TOKEN not found"
 
 **Solution:**
+
 1. Generate token at [Vercel Account Settings](https://vercel.com/account/tokens)
 2. Add to `.env.local`: `VERCEL_ACCESS_TOKEN=your_token`
 3. Ensure token has Edge Config write permissions
@@ -1236,11 +1289,13 @@ git push origin main
 #### ❌ "Failed to update Edge Config"
 
 **Possible causes:**
+
 - Invalid `VERCEL_ACCESS_TOKEN`
 - Token doesn't have write permissions
 - Edge Config ID is incorrect
 
 **Solution:**
+
 1. Verify token is valid: `npm run test-edge-config`
 2. Regenerate token with correct permissions
 3. Check Edge Config connection string format
@@ -1249,6 +1304,7 @@ git push origin main
 
 **Problem:**
 This occurs when Node.js cannot verify SSL certificates, common in:
+
 - Corporate networks with proxy/firewall
 - Self-signed certificates
 - VPN connections
@@ -1257,6 +1313,7 @@ This occurs when Node.js cannot verify SSL certificates, common in:
 The development server already has SSL verification disabled via `NODE_TLS_REJECT_UNAUTHORIZED=0` in the `npm run dev` script.
 
 If you need SSL verification enabled (not recommended for local dev):
+
 ```bash
 npm run dev:secure
 ```
@@ -1266,11 +1323,13 @@ npm run dev:secure
 #### ❌ Slack notifications not working
 
 **Possible causes:**
+
 - Webhook URL not configured
 - Invalid webhook URL
 - Network error
 
 **Solution:**
+
 1. Verify webhook URL in Settings page
 2. Test webhook manually:
    ```bash
@@ -1283,6 +1342,7 @@ npm run dev:secure
 #### ❌ Rotation not happening automatically
 
 **Check:**
+
 1. Cron job is configured in `vercel.json`
 2. Application is deployed to Vercel (cron jobs don't work locally)
 3. Check logs at `/api/logs`
@@ -1291,6 +1351,7 @@ npm run dev:secure
 #### ❌ "Edge Config client is not initialized"
 
 **Solution:**
+
 1. Check if `EDGE_CONFIG` is set in `.env.local`
 2. Ensure environment variables are loading correctly
 3. Restart the development server
@@ -1302,6 +1363,7 @@ npm run dev:secure
 Task assignments reference member IDs that don't exist in the members list.
 
 **Solution:**
+
 1. Check your data consistency:
    ```bash
    npm run export-data
@@ -1322,6 +1384,7 @@ Scripts like `npm run migrate` can't find environment variables.
 This is already fixed in the latest version. The scripts now use `dotenv-cli` to load `.env.local` automatically.
 
 If still failing:
+
 1. Ensure `dotenv-cli` is installed: `npm install -D dotenv-cli`
 2. Ensure `cross-env` is installed: `npm install -D cross-env`
 3. Verify `.env.local` exists and has no syntax errors
@@ -1331,10 +1394,12 @@ If still failing:
 Enable detailed logging:
 
 1. Check application logs:
+
    - Navigate to Dashboard → System Logs tab
    - Or call `GET /api/logs`
 
 2. View Vercel logs (for production):
+
    - Go to Vercel Dashboard → Your Project → Logs
    - Filter by function or time range
 
@@ -1352,10 +1417,10 @@ Enable detailed logging:
 4. Commit with clear message: `git commit -m "Add: your feature"`
 5. Push and create a Pull Request
 
-
 ## Support
 
 For issues or questions:
+
 - Check the [Troubleshooting](#troubleshooting) section
 - Review [Vercel Edge Config docs](https://vercel.com/docs/storage/edge-config)
 - Check application logs at `/api/logs`
