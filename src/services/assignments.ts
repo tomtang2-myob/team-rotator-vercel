@@ -20,18 +20,18 @@ export async function getSlackMessage(assignments: any[]) {
     return null;
   }
 
-  // 获取所有成员并按 ID 排序
+  // Get all members and sort by ID
   const allMembers = await getMembers();
   const sortedMembers = allMembers.sort((a, b) => a.id - b.id);
 
-  // 按照 ID 排序
+  // Sort by ID
   const sortedAssignments = assignments.sort((a, b) => a.id - b.id);
   const messageBuilder = [];
 
   for (const assignment of sortedAssignments) {
     messageBuilder.push(`${assignment.taskName}: <@${assignment.slackMemberId}>\n`);
 
-    // 特殊处理 English word 任务
+    // Special handling for English word task
     if (assignment.taskName === "English word") {
       const currentMemberIndex = sortedMembers.findIndex(m => m.id === assignment.memberId);
       if (currentMemberIndex !== -1) {
@@ -67,7 +67,7 @@ export async function sendToSlack(webhookUrl: string, message: string) {
     if (!response.ok) {
       const error = `Failed to send Slack message. Status: ${response.status}`;
       logger.error(error);
-      // 不抛出错误，只记录日志
+      // Don't throw error, just log it
       return;
     }
 
@@ -75,12 +75,12 @@ export async function sendToSlack(webhookUrl: string, message: string) {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error sending to Slack';
     logger.error(`Error in sendToSlack: ${errorMessage}`);
-    // 不抛出错误，只记录日志
+    // Don't throw error, just log it
     return;
   }
 }
 
-// 只更新任务分配，不发送通知
+// Only update task assignments, don't send notifications
 export async function updateAssignmentsOnly(options: { 
   checkWorkingDay?: boolean,
   date?: Date
@@ -88,13 +88,13 @@ export async function updateAssignmentsOnly(options: {
   const { checkWorkingDay = false, date = new Date() } = options;
 
   try {
-    // 检查是否是工作日（如果需要）
+    // Check if it's a working day (if needed)
     if (checkWorkingDay && !await isWorkingDay(date)) {
       logger.info(`${date.toISOString().split('T')[0]} is not a working day. Skipping member rotation.`);
       return { success: true, message: 'Not a working day, skipping update' };
     }
 
-    // 更新任务分配
+    // Update task assignments
     await updateTaskAssignments();
     return { success: true, message: 'Task assignments updated successfully' };
   } catch (error) {
@@ -103,7 +103,7 @@ export async function updateAssignmentsOnly(options: {
   }
 }
 
-// 只发送 Slack 通知
+// Only send Slack notifications
 export async function sendNotificationOnly() {
   try {
     logger.info('Getting task assignments...');
@@ -141,20 +141,20 @@ export async function updateRotation() {
     const today = new Date();
     logger.info(`Checking rotation for date: ${today.toISOString().split('T')[0]}`);
     
-    // 先更新任务分配
+    // First update task assignments
     const updateResult = await updateAssignmentsOnly({ 
       checkWorkingDay: true,
       date: today
     });
 
-    // 如果不是工作日，直接返回
+    // If not a working day, return directly
     if (updateResult.message === 'Not a working day, skipping update') {
       logger.info('Not a working day, skipping update');
       return { message: updateResult.message, skipped: true };
     }
 
     logger.info('Assignments updated successfully, sending notification...');
-    // 再发送通知
+    // Then send notifications
     const notificationResult = await sendNotificationOnly();
     
     logger.info('Rotation update completed successfully');

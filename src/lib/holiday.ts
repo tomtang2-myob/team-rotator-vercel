@@ -28,19 +28,19 @@ export async function getHolidays(year: number): Promise<HolidayDto[]> {
 }
 
 export async function isWorkingDay(date: Date = new Date()): Promise<boolean> {
-  // 首先检查是否是节假日
+  // First check if it's a holiday
   const year = date.getFullYear();
   const holidays = await getHolidays(year);
   const dateString = date.toISOString().split('T')[0];
   const holiday = holidays.find(h => h.date === dateString);
 
   if (holiday) {
-    // 如果是节假日，返回 !isOffDay
-    // 这意味着如果是休息日返回 false，如果是工作日返回 true
+    // If it's a holiday, return !isOffDay
+    // This means return false if it's an off day, return true if it's a working day
     return !holiday.isOffDay;
   }
 
-  // 如果不是节假日，检查是否是周末
+  // If not a holiday, check if it's a weekend
   const dayOfWeek = date.getDay();
-  return !(dayOfWeek === 0 || dayOfWeek === 6); // 如果是周末返回 false，否则返回 true
+  return !(dayOfWeek === 0 || dayOfWeek === 6); // Return false if it's a weekend, otherwise return true
 } 

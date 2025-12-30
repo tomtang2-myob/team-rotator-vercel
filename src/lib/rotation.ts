@@ -22,7 +22,7 @@ async function findNextWorkingDay(fromDate: Date): Promise<Date> {
   return next;
 }
 
-// 获取指定日期所在周的周一
+// Get Monday of the week for a given date
 function getMondayOfWeek(date: Date): Date {
   const monday = new Date(date);
   monday.setDate(monday.getDate() - (monday.getDay() - 1 + 7) % 7);
@@ -52,26 +52,26 @@ export async function calculateNextRotationDates(task: Task, fromDate: Date): Pr
 
   switch (frequency) {
     case 'weekly': {
-      // 对于weekly任务（如Standup和Tech huddle），从当前结束日期的下一个工作日开始
+      // For weekly tasks (like Standup and Tech huddle), start from the next working day after the current end date
       startDate = await findNextWorkingDay(fromDate);
       
-      // 找到下一个目标日期（周五）作为结束日期
+      // Find the next target date (Friday) as the end date
       endDate = getNextDayAfterTargetDay(startDate, targetDay);
       break;
     }
     case 'biweekly': {
-      // 对于biweekly任务（如English corner和Retro），从当前结束日期的下一个工作日开始
+      // For biweekly tasks (like English corner and Retro), start from the next working day after the current end date
       startDate = await findNextWorkingDay(fromDate);
       
-      // 找到下一个目标日期（周四或周三）
+      // Find the next target date (Thursday or Wednesday)
       endDate = getNextDayAfterTargetDay(startDate, targetDay);
       
-      // 如果下一个目标日期比开始日期早，说明需要再往后找一周
+      // If the next target date is earlier than the start date, need to look one more week ahead
       if (endDate <= startDate) {
         endDate.setDate(endDate.getDate() + 7);
       }
       
-      // 再加一周，确保是两周的周期
+      // Add one more week to ensure a two-week cycle
       endDate.setDate(endDate.getDate() + 7);
       break;
     }
@@ -92,13 +92,13 @@ function rotateMemberList(currentMemberId: number, members: Member[], rotations:
 }
 
 async function shouldRotateToday(task: Task, today: Date): Promise<boolean> {
-  // 首先检查是否是工作日
+  // First check if it's a working day
   if (!(await isWorkingDay(today))) {
     logger.info(`${today.toISOString().split('T')[0]} is not a working day, skipping rotation check`);
     return false;
   }
 
-  // 只要是工作日就可以进行轮换检查
+  // Can proceed with rotation check as long as it's a working day
   return true;
 }
 
@@ -129,22 +129,22 @@ export async function updateTaskAssignments(): Promise<void> {
       Current member: ${assignment.memberId}
       Today: ${today.toISOString().split('T')[0]}`);
 
-    // 检查是否需要今天轮换
+    // Check if rotation is needed today
     if (!(await shouldRotateToday(task, today))) {
       logger.info(`Not rotation day for task ${task.name}, skipping`);
       continue;
     }
 
-    // 如果当前分配还未结束，不需要轮换
+    // If current assignment hasn't ended, no need to rotate
     if (today <= endDate) {
       logger.info(`Assignment ${assignment.id} is still current, skipping`);
       continue;
     }
 
-    // 计算新的轮换周期
+    // Calculate new rotation period
     const { startDate: newStartDate, endDate: newEndDate } = await calculateNextRotationDates(task, endDate);
 
-    // 计算新的成员（对于所有类型的任务都向前轮换一位）
+    // Calculate new member (rotate forward one position for all task types)
     const newMemberId = rotateMemberList(assignment.memberId, members, 1);
 
     logger.info(`Updating assignment ${assignment.id}:

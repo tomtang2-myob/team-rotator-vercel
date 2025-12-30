@@ -12,7 +12,7 @@ export const api = axios.create({
   },
 });
 
-// 错误处理函数
+// Error handling function
 const handleApiError = (error: AxiosError, context: string) => {
   console.error(`API Error in ${context}:`, {
     status: error.response?.status,

@@ -143,7 +143,7 @@ export default function Dashboard() {
   };
 
   const getCurrentAssignments = () => {
-    // 获取每个任务的最新分配
+    // Get the latest assignment for each task
     const latestAssignments = new Map<number, TaskAssignmentWithDetails>();
     assignments.forEach(assignment => {
       const existingAssignment = latestAssignments.get(assignment.taskId);
@@ -152,7 +152,7 @@ export default function Dashboard() {
       }
     });
     
-    // 转换回数组并按任务 ID 排序
+    // Convert back to array and sort by task ID
     return Array.from(latestAssignments.values())
       .sort((a, b) => a.id - b.id);
   };
@@ -184,23 +184,23 @@ export default function Dashboard() {
     setSelectedTab(newValue);
   };
 
-  // 获取当前的任务分配信息并格式化为 Slack 消息格式
+  // Get current task assignment information and format as Slack message
   const getSlackMessagePreview = () => {
-    // 按照 ID 排序，与 TeamRotator 保持一致
+    // Sort by ID, consistent with TeamRotator
     const sortedAssignments = [...assignments].sort((a, b) => a.id - b.id);
     
     if (sortedAssignments.length === 0) {
       return null;
     }
 
-    // 获取所有成员并按 ID 排序
+    // Get all members and sort by ID
     const allMembers = members.sort((a, b) => a.id - b.id);
 
     let message = '';
     for (const assignment of sortedAssignments) {
       message += `${assignment.taskName}: ${assignment.host}\n`;
 
-      // 特殊处理 English word 任务
+      // Special handling for English word task
       if (assignment.taskName === "English word") {
         const currentMemberIndex = allMembers.findIndex(m => m.id === assignment.memberId);
         if (currentMemberIndex !== -1) {
@@ -216,7 +216,7 @@ export default function Dashboard() {
     return message;
   };
 
-  // 在返回的 JSX 中添加加载和错误状态处理
+  // Add loading and error state handling in the returned JSX
   if (isLoadingAssignments || isLoadingMembers) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">

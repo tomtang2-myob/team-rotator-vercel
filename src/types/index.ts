@@ -27,7 +27,7 @@ export interface SystemConfig {
 
 export type EdgeConfigValue = string | number | boolean | Record<string, any> | EdgeConfigValue[];
 
-// Edge Config 类型定义
+// Edge Config type definitions
 export type EdgeConfigClient = {
   get<T = EdgeConfigValue>(key: string): Promise<T>;
   set<T = EdgeConfigValue>(key: string, value: T): Promise<void>;

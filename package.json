@@ -10,7 +10,8 @@
     "export-data": "ts-node scripts/export-data.ts",
     "migrate": "ts-node -r tsconfig-paths/register scripts/migrate-to-edge-config.ts",
     "clear-edge-config": "ts-node -r tsconfig-paths/register scripts/clear-edge-config.ts",
-    "create-edge-config": "ts-node -r tsconfig-paths/register scripts/create-edge-config.ts"
+    "create-edge-config": "ts-node -r tsconfig-paths/register scripts/create-edge-config.ts",
+    "test-edge-config": "bash -c 'set -a && source .env.local && set +a && ./test-edge-config.sh'"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

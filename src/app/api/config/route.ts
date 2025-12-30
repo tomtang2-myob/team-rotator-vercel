@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     
     await saveSystemConfig(config);
     
-    // 获取更新后的配置
+    // Get updated configuration
     const updatedConfigs = await getSystemConfigs();
     const savedConfig = updatedConfigs.find(c => c.key === config.key);
     

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// 从 Edge Config URL 中提取配置 ID
+// Extract configuration ID from Edge Config URL
 function getConfigIdFromUrl(url: string): string {
   const matches = url.match(/\/([^\/]+)$/);
   return matches ? matches[1] : '';

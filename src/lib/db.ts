@@ -2,13 +2,13 @@ import { Member, Task, TaskAssignment, SystemConfig } from '@/types';
 import { createClient } from '@vercel/edge-config';
 import { logger } from './logger';
 
-// Edge Config 客户端配置
+// Edge Config client configuration
 const EDGE_CONFIG = process.env.EDGE_CONFIG;
 const EDGE_CONFIG_ID = EDGE_CONFIG ? new URL(EDGE_CONFIG).pathname.split('/')[1] : null;
 const EDGE_CONFIG_TOKEN = EDGE_CONFIG ? new URL(EDGE_CONFIG).searchParams.get('token') : null;
 const VERCEL_ACCESS_TOKEN = process.env.VERCEL_ACCESS_TOKEN;
 
-// 读取客户端
+// Read client
 const edgeConfigRead = process.env.EDGE_CONFIG ? createClient(process.env.EDGE_CONFIG) : null;
 
 if (!process.env.EDGE_CONFIG) {
@@ -23,7 +23,7 @@ if (!process.env.VERCEL_ACCESS_TOKEN) {
   logger.info('Vercel access token is available for write operations');
 }
 
-// 内存缓存，用于开发环境
+// In-memory cache for development environment
 let membersCache: Member[] = [];
 let tasksCache: Task[] = [];
 let taskAssignmentsCache: TaskAssignment[] = [];
@@ -31,12 +31,12 @@ let systemConfigsCache: SystemConfig[] = [];
 
 const isDev = process.env.NODE_ENV === 'development';
 
-// 辅助函数：确保数组存在
+// Helper function: ensure array exists
 function ensureArray<T>(value: T[] | null | undefined): T[] {
   return value || [];
 }
 
-// 辅助函数：检查 Edge Config 是否可用
+// Helper function: check if Edge Config is available
 function checkEdgeConfig() {
   if (!edgeConfigRead) {
     logger.error('Edge Config client is not initialized');
@@ -44,7 +44,7 @@ function checkEdgeConfig() {
   }
 }
 
-// 辅助函数：使用 Vercel REST API 更新 Edge Config
+// Helper function: update Edge Config using Vercel REST API
 export async function updateEdgeConfig(key: string, value: any) {
   if (!EDGE_CONFIG_ID) {
     logger.error('Edge Config ID not found');
@@ -346,7 +346,7 @@ export async function saveSystemConfig(config: SystemConfig): Promise<void> {
       configs.push(config);
     }
 
-    // 更新Edge Config并等待结果
+    // Update Edge Config and wait for result
     const result = await updateEdgeConfig('systemConfigs', configs);
     logger.info('System config saved successfully', { config, result });
   } catch (error) {
@@ -356,7 +356,7 @@ export async function saveSystemConfig(config: SystemConfig): Promise<void> {
   }
 }
 
-// 用于获取带有详细信息的任务分配
+// Get task assignments with detailed information
 export async function getTaskAssignmentsWithDetails(): Promise<any[]> {
   const [assignments, tasks, members] = await Promise.all([
     getTaskAssignments(),

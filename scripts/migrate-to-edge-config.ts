@@ -19,7 +19,7 @@ async function migrateToEdgeConfig() {
   }
 
   try {
-    // 读取本地 JSON 文件
+    // Read local JSON files
     const members = await readJsonFile(path.join(process.cwd(), 'data', 'members.json'));
     const tasks = await readJsonFile(path.join(process.cwd(), 'data', 'tasks.json'));
     const taskAssignments = await readJsonFile(path.join(process.cwd(), 'data', 'task_assignments.json'));
@@ -30,7 +30,7 @@ async function migrateToEdgeConfig() {
       process.exit(1);
     }
 
-    // 获取 Edge Config ID
+    // Get Edge Config ID
     const matches = process.env.EDGE_CONFIG.match(/\/([^\/]+)$/);
     const configId = matches ? matches[1] : '';
     if (!configId) {
@@ -38,7 +38,7 @@ async function migrateToEdgeConfig() {
       process.exit(1);
     }
 
-    // 迁移数据到 Edge Config
+    // Migrate data to Edge Config
         await axios.patch(
           `https://api.vercel.com/v1/edge-config/${configId}/items`,
       {

@@ -37,7 +37,7 @@ export function LogViewer() {
 
   useEffect(() => {
     fetchLogs();
-    // 每30秒刷新一次日志
+    // Refresh logs every 30 seconds
     const interval = setInterval(fetchLogs, 30000);
     return () => clearInterval(interval);
   }, []);
