@@ -2,25 +2,46 @@ import { Member, Task, TaskAssignment, SystemConfig } from '@/types';
 import { createClient } from '@vercel/edge-config';
 import { logger } from './logger';
 
-// Edge Config client configuration
-const EDGE_CONFIG = process.env.EDGE_CONFIG;
-const EDGE_CONFIG_ID = EDGE_CONFIG ? new URL(EDGE_CONFIG).pathname.split('/')[1] : null;
-const EDGE_CONFIG_TOKEN = EDGE_CONFIG ? new URL(EDGE_CONFIG).searchParams.get('token') : null;
-const VERCEL_ACCESS_TOKEN = process.env.VERCEL_ACCESS_TOKEN;
+// Edge Config client configuration (lazy-loaded)
+let edgeConfigRead: ReturnType<typeof createClient> | null = null;
 
-// Read client
-const edgeConfigRead = process.env.EDGE_CONFIG ? createClient(process.env.EDGE_CONFIG) : null;
-
-if (!process.env.EDGE_CONFIG) {
-  logger.warn('EDGE_CONFIG environment variable is not set');
-} else {
-  logger.info('Edge Config read client initialized successfully');
+function getEdgeConfigClient() {
+  if (edgeConfigRead) {
+    return edgeConfigRead;
   }
+  
+  const EDGE_CONFIG = process.env.EDGE_CONFIG;
+  
+  if (!EDGE_CONFIG) {
+    logger.warn('EDGE_CONFIG environment variable is not set');
+    return null;
+  }
+  
+  try {
+    edgeConfigRead = createClient(EDGE_CONFIG);
+    logger.info('Edge Config read client initialized successfully');
+    return edgeConfigRead;
+  } catch (error) {
+    logger.error('Failed to initialize Edge Config client', { error: String(error) });
+    return null;
+  }
+}
 
-if (!process.env.VERCEL_ACCESS_TOKEN) {
-  logger.warn('VERCEL_ACCESS_TOKEN environment variable is not set');
-} else {
-  logger.info('Vercel access token is available for write operations');
+function getEdgeConfigId(): string | null {
+  const EDGE_CONFIG = process.env.EDGE_CONFIG;
+  if (!EDGE_CONFIG) return null;
+  
+  try {
+    const url = new URL(EDGE_CONFIG);
+    return url.pathname.split('/')[1] || null;
+  } catch (error) {
+    logger.error('Failed to parse EDGE_CONFIG URL', { error: String(error) });
+    return null;
+  }
+}
+
+function getVercelAccessToken(): string | null {
+  return process.env.VERCEL_ACCESS_TOKEN || null;
 }
 
 // In-memory cache for development environment
@@ -30,6 +51,7 @@ let taskAssignmentsCache: TaskAssignment[] = [];
 let systemConfigsCache: SystemConfig[] = [];
 
 const isDev = process.env.NODE_ENV === 'development';
+const useEdgeConfigInDev = process.env.NEXT_PUBLIC_USE_EDGE_CONFIG === 'true';
 
 // Helper function: ensure array exists
 function ensureArray<T>(value: T[] | null | undefined): T[] {
@@ -38,14 +60,26 @@ function ensureArray<T>(value: T[] | null | undefined): T[] {
 
 // Helper function: check if Edge Config is available
 function checkEdgeConfig() {
-  if (!edgeConfigRead) {
-    logger.error('Edge Config client is not initialized');
+  const client = getEdgeConfigClient();
+  if (!client) {
+    const details = {
+      hasEdgeConfig: !!process.env.EDGE_CONFIG,
+      edgeConfigValue: process.env.EDGE_CONFIG ? 'SET' : 'NOT SET',
+      isDev,
+      useEdgeConfigInDev,
+    };
+    logger.error('Edge Config client is not initialized', details);
+    console.error('Edge Config initialization failed:', details);
     throw new Error('Edge Config client is not initialized');
   }
+  return client;
 }
 
 // Helper function: update Edge Config using Vercel REST API
 export async function updateEdgeConfig(key: string, value: any) {
+  const EDGE_CONFIG_ID = getEdgeConfigId();
+  const VERCEL_ACCESS_TOKEN = getVercelAccessToken();
+  
   if (!EDGE_CONFIG_ID) {
     logger.error('Edge Config ID not found');
     throw new Error('Edge Config ID not found');
@@ -94,17 +128,19 @@ export async function updateEdgeConfig(key: string, value: any) {
 
 // Members
 export async function getMembers(): Promise<Member[]> {
-  if (isDev) {
+  if (isDev && !useEdgeConfigInDev) {
     logger.info('Using local cache for members in development mode');
     return membersCache;
   }
   
   try {
-    checkEdgeConfig();
-    const members = await edgeConfigRead!.get('members') as Member[] | null;
+    const client = checkEdgeConfig();
+    const members = await client.get('members') as Member[] | null;
     return ensureArray(members);
   } catch (error) {
-    logger.error('Failed to get members from Edge Config');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error(`Failed to get members from Edge Config: ${errorMessage}`);
+    console.error('Edge Config Error Details:', error);
     return [];
   }
 }
@@ -122,7 +158,7 @@ export async function createMember(member: Omit<Member, 'id'>): Promise<Member> 
     id: maxId + 1
   };
 
-  if (isDev) {
+  if (isDev && !useEdgeConfigInDev) {
     membersCache.push(newMember);
     return newMember;
   }
@@ -138,7 +174,7 @@ export async function createMember(member: Omit<Member, 'id'>): Promise<Member> 
 }
 
 export async function updateMember(member: Member): Promise<void> {
-  if (isDev) {
+  if (isDev && !useEdgeConfigInDev) {
     const index = membersCache.findIndex(m => m.id === member.id);
     if (index !== -1) {
       membersCache[index] = member;
@@ -164,7 +200,7 @@ export async function updateMember(member: Member): Promise<void> {
 }
 
 export async function deleteMember(id: number): Promise<void> {
-  if (isDev) {
+  if (isDev && !useEdgeConfigInDev) {
     membersCache = membersCache.filter(m => m.id !== id);
     return;
   }
@@ -181,14 +217,14 @@ export async function deleteMember(id: number): Promise<void> {
 
 // Tasks
 export async function getTasks(): Promise<Task[]> {
-  if (isDev) {
+  if (isDev && !useEdgeConfigInDev) {
     logger.info('Using local cache for tasks in development mode');
     return tasksCache;
   }
 
   try {
-    checkEdgeConfig();
-    const tasks = await edgeConfigRead!.get('tasks') as Task[] | null;
+    const client = checkEdgeConfig();
+    const tasks = await client.get('tasks') as Task[] | null;
     return ensureArray(tasks);
   } catch (error) {
     logger.error('Failed to get tasks from Edge Config');
@@ -209,7 +245,7 @@ export async function createTask(task: Omit<Task, 'id'>): Promise<Task> {
     id: maxId + 1
   };
 
-  if (isDev) {
+  if (isDev && !useEdgeConfigInDev) {
     tasksCache.push(newTask);
     return newTask;
   }
@@ -225,7 +261,7 @@ export async function createTask(task: Omit<Task, 'id'>): Promise<Task> {
 }
 
 export async function updateTask(task: Task): Promise<void> {
-  if (isDev) {
+  if (isDev && !useEdgeConfigInDev) {
     const index = tasksCache.findIndex(t => t.id === task.id);
     if (index !== -1) {
       tasksCache[index] = task;
@@ -251,7 +287,7 @@ export async function updateTask(task: Task): Promise<void> {
 }
 
 export async function deleteTask(id: number): Promise<void> {
-  if (isDev) {
+  if (isDev && !useEdgeConfigInDev) {
     tasksCache = tasksCache.filter(t => t.id !== id);
     return;
   }
@@ -268,14 +304,14 @@ export async function deleteTask(id: number): Promise<void> {
 
 // Task Assignments
 export async function getTaskAssignments(): Promise<TaskAssignment[]> {
-  if (isDev) {
+  if (isDev && !useEdgeConfigInDev) {
     logger.info('Using local cache for task assignments in development mode');
     return taskAssignmentsCache;
   }
 
   try {
-    checkEdgeConfig();
-    const assignments = await edgeConfigRead!.get('taskAssignments') as TaskAssignment[] | null;
+    const client = checkEdgeConfig();
+    const assignments = await client.get('taskAssignments') as TaskAssignment[] | null;
     return ensureArray(assignments);
   } catch (error) {
     logger.error('Failed to get task assignments from Edge Config');
@@ -284,7 +320,7 @@ export async function getTaskAssignments(): Promise<TaskAssignment[]> {
 }
 
 export async function updateTaskAssignment(assignment: TaskAssignment): Promise<void> {
-  if (isDev) {
+  if (isDev && !useEdgeConfigInDev) {
     const index = taskAssignmentsCache.findIndex(a => a.id === assignment.id);
     if (index !== -1) {
       taskAssignmentsCache[index] = assignment;
@@ -311,14 +347,14 @@ export async function updateTaskAssignment(assignment: TaskAssignment): Promise<
 
 // System Configs
 export async function getSystemConfigs(): Promise<SystemConfig[]> {
-  if (isDev) {
+  if (isDev && !useEdgeConfigInDev) {
     logger.info('Using local cache for system configs in development mode');
     return systemConfigsCache;
   }
 
   try {
-    checkEdgeConfig();
-    const configs = await edgeConfigRead!.get('systemConfigs') as SystemConfig[] | null;
+    const client = checkEdgeConfig();
+    const configs = await client.get('systemConfigs') as SystemConfig[] | null;
     return ensureArray(configs);
   } catch (error) {
     logger.error('Failed to get system configs from Edge Config');
@@ -327,7 +363,7 @@ export async function getSystemConfigs(): Promise<SystemConfig[]> {
 }
 
 export async function saveSystemConfig(config: SystemConfig): Promise<void> {
-  if (isDev) {
+  if (isDev && !useEdgeConfigInDev) {
     const index = systemConfigsCache.findIndex(c => c.key === config.key);
     if (index !== -1) {
       systemConfigsCache[index] = config;

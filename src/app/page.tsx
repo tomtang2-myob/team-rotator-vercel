@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -24,62 +24,86 @@ import {
   Tabs,
   DialogContentText,
   CircularProgress,
-} from '@mui/material';
-import { Edit as EditIcon, Refresh as RefreshIcon, Send as SendIcon } from '@mui/icons-material';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAssignments, getMembers, updateAssignment, triggerRotationUpdate, sendToSlack } from '@/services/api';
-import { format, parseISO } from 'date-fns';
-import { TaskAssignmentWithDetails, Member } from '@/types';
+} from "@mui/material";
+import {
+  Edit as EditIcon,
+  Refresh as RefreshIcon,
+  Send as SendIcon,
+} from "@mui/icons-material";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  getAssignments,
+  getMembers,
+  updateAssignment,
+  triggerRotationUpdate,
+  sendToSlack,
+} from "@/services/api";
+import { format, parseISO } from "date-fns";
+import { TaskAssignmentWithDetails, Member } from "@/types";
 import { LogViewer } from "./components/LogViewer";
 
 export default function Dashboard() {
   const [selectedTab, setSelectedTab] = useState(0);
   const queryClient = useQueryClient();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedAssignment, setSelectedAssignment] = useState<TaskAssignmentWithDetails | null>(null);
-  const [selectedMember, setSelectedMember] = useState<{ host: string; startDate: string; endDate: string; }>({
-    host: '',
-    startDate: '',
-    endDate: '',
+  const [selectedAssignment, setSelectedAssignment] =
+    useState<TaskAssignmentWithDetails | null>(null);
+  const [selectedMember, setSelectedMember] = useState<{
+    host: string;
+    startDate: string;
+    endDate: string;
+  }>({
+    host: "",
+    startDate: "",
+    endDate: "",
   });
   const [snackbar, setSnackbar] = useState({
     open: false,
-    message: '',
-    severity: 'success' as 'success' | 'error'
+    message: "",
+    severity: "success" as "success" | "error",
   });
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
-  const { data: assignments = [], isLoading: isLoadingAssignments, error: assignmentsError } = useQuery<TaskAssignmentWithDetails[]>({
-    queryKey: ['assignments'],
+  const {
+    data: assignments = [],
+    isLoading: isLoadingAssignments,
+    error: assignmentsError,
+  } = useQuery<TaskAssignmentWithDetails[]>({
+    queryKey: ["assignments"],
     queryFn: getAssignments,
     retry: 3,
     retryDelay: 1000,
   });
 
-  const { data: members = [], isLoading: isLoadingMembers, error: membersError } = useQuery<Member[]>({
-    queryKey: ['members'],
+  const {
+    data: members = [],
+    isLoading: isLoadingMembers,
+    error: membersError,
+  } = useQuery<Member[]>({
+    queryKey: ["members"],
     queryFn: getMembers,
     retry: 3,
     retryDelay: 1000,
   });
 
   const updateAssignmentMutation = useMutation({
-    mutationFn: (assignment: TaskAssignmentWithDetails) => updateAssignment(assignment),
+    mutationFn: (assignment: TaskAssignmentWithDetails) =>
+      updateAssignment(assignment),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assignments'] });
+      queryClient.invalidateQueries({ queryKey: ["assignments"] });
       handleCloseDialog();
       setSnackbar({
         open: true,
-        message: 'Assignment updated successfully',
-        severity: 'success'
+        message: "Assignment updated successfully",
+        severity: "success",
       });
     },
     onError: (error) => {
-      console.error('Failed to update assignment:', error);
+      console.error("Failed to update assignment:", error);
       setSnackbar({
         open: true,
-        message: 'Failed to update assignment',
-        severity: 'error'
+        message: "Failed to update assignment",
+        severity: "error",
       });
     },
   });
@@ -87,19 +111,19 @@ export default function Dashboard() {
   const updateRotationMutation = useMutation({
     mutationFn: triggerRotationUpdate,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assignments'] });
+      queryClient.invalidateQueries({ queryKey: ["assignments"] });
       setSnackbar({
         open: true,
-        message: 'Rotation updated successfully',
-        severity: 'success'
+        message: "Rotation updated successfully",
+        severity: "success",
       });
     },
     onError: (error) => {
-      console.error('Failed to update rotation:', error);
+      console.error("Failed to update rotation:", error);
       setSnackbar({
         open: true,
-        message: 'Failed to update rotation',
-        severity: 'error'
+        message: "Failed to update rotation",
+        severity: "error",
       });
     },
   });
@@ -118,16 +142,18 @@ export default function Dashboard() {
     setEditDialogOpen(false);
     setSelectedAssignment(null);
     setSelectedMember({
-      host: '',
-      startDate: '',
-      endDate: '',
+      host: "",
+      startDate: "",
+      endDate: "",
     });
   };
 
   const handleSave = async () => {
     if (!selectedAssignment) return;
 
-    const selectedMemberData = members.find(m => m.host === selectedMember.host);
+    const selectedMemberData = members.find(
+      (m) => m.host === selectedMember.host
+    );
     if (!selectedMemberData) return;
 
     await updateAssignmentMutation.mutateAsync({
@@ -145,16 +171,18 @@ export default function Dashboard() {
   const getCurrentAssignments = () => {
     // Get the latest assignment for each task
     const latestAssignments = new Map<number, TaskAssignmentWithDetails>();
-    assignments.forEach(assignment => {
+    assignments.forEach((assignment) => {
       const existingAssignment = latestAssignments.get(assignment.taskId);
-      if (!existingAssignment || new Date(assignment.startDate) > new Date(existingAssignment.startDate)) {
+      if (
+        !existingAssignment ||
+        new Date(assignment.startDate) > new Date(existingAssignment.startDate)
+      ) {
         latestAssignments.set(assignment.taskId, assignment);
       }
     });
-    
+
     // Convert back to array and sort by task ID
-    return Array.from(latestAssignments.values())
-      .sort((a, b) => a.id - b.id);
+    return Array.from(latestAssignments.values()).sort((a, b) => a.id - b.id);
   };
 
   const handleSendToSlack = async () => {
@@ -163,15 +191,15 @@ export default function Dashboard() {
       await sendToSlack();
       setSnackbar({
         open: true,
-        message: 'Successfully sent assignments to Slack',
-        severity: 'success'
+        message: "Successfully sent assignments to Slack",
+        severity: "success",
       });
     } catch (error) {
-      console.error('Error sending to Slack:', error);
+      console.error("Error sending to Slack:", error);
       setSnackbar({
         open: true,
-        message: 'Failed to send assignments to Slack',
-        severity: 'error'
+        message: "Failed to send assignments to Slack",
+        severity: "error",
       });
     }
   };
@@ -188,7 +216,7 @@ export default function Dashboard() {
   const getSlackMessagePreview = () => {
     // Sort by ID, consistent with TeamRotator
     const sortedAssignments = [...assignments].sort((a, b) => a.id - b.id);
-    
+
     if (sortedAssignments.length === 0) {
       return null;
     }
@@ -196,16 +224,20 @@ export default function Dashboard() {
     // Get all members and sort by ID
     const allMembers = members.sort((a, b) => a.id - b.id);
 
-    let message = '';
+    let message = "";
     for (const assignment of sortedAssignments) {
       message += `${assignment.taskName}: ${assignment.host}\n`;
 
       // Special handling for English word task
       if (assignment.taskName === "English word") {
-        const currentMemberIndex = allMembers.findIndex(m => m.id === assignment.memberId);
+        const currentMemberIndex = allMembers.findIndex(
+          (m) => m.id === assignment.memberId
+        );
         if (currentMemberIndex !== -1) {
-          const nextOneMember = allMembers[(currentMemberIndex + 1) % allMembers.length];
-          const nextTwoMember = allMembers[(currentMemberIndex + 2) % allMembers.length];
+          const nextOneMember =
+            allMembers[(currentMemberIndex + 1) % allMembers.length];
+          const nextTwoMember =
+            allMembers[(currentMemberIndex + 2) % allMembers.length];
 
           message += `English word(Day + 1): ${nextOneMember.host}\n`;
           message += `English word(Day + 2): ${nextTwoMember.host}\n`;
@@ -219,7 +251,12 @@ export default function Dashboard() {
   // Add loading and error state handling in the returned JSX
   if (isLoadingAssignments || isLoadingMembers) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="100vh"
+      >
         <CircularProgress />
       </Box>
     );
@@ -229,7 +266,9 @@ export default function Dashboard() {
     return (
       <Box p={3}>
         <Alert severity="error">
-          {assignmentsError ? 'Failed to load assignments' : 'Failed to load members'}
+          {assignmentsError
+            ? "Failed to load assignments"
+            : "Failed to load members"}
         </Alert>
       </Box>
     );
@@ -239,16 +278,20 @@ export default function Dashboard() {
     <Box p={3}>
       <Box display="flex" flexDirection="column" gap={2}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h4">
-            Dashboard
-          </Typography>
+          <Typography variant="h4">Dashboard</Typography>
           <Box display="flex" gap={2}>
             <Button
               variant="contained"
               color="primary"
               onClick={handleUpdateRotation}
               disabled={updateRotationMutation.isPending}
-              startIcon={updateRotationMutation.isPending ? <CircularProgress size={20} /> : <RefreshIcon />}
+              startIcon={
+                updateRotationMutation.isPending ? (
+                  <CircularProgress size={20} />
+                ) : (
+                  <RefreshIcon />
+                )
+              }
             >
               Update Rotation
             </Button>
@@ -268,17 +311,17 @@ export default function Dashboard() {
           value={selectedTab}
           onChange={handleTabChange}
           sx={{
-            '& .MuiTab-root': {
-              transition: 'background-color 0.3s',
-              '&:hover': {
-                backgroundColor: 'rgba(0, 0, 0, 0.04)',
+            "& .MuiTab-root": {
+              transition: "background-color 0.3s",
+              "&:hover": {
+                backgroundColor: "rgba(0, 0, 0, 0.04)",
               },
-              '&.Mui-selected': {
-                color: 'primary.main',
+              "&.Mui-selected": {
+                color: "primary.main",
               },
             },
-            '& .MuiTabs-indicator': {
-              backgroundColor: 'primary.main',
+            "& .MuiTabs-indicator": {
+              backgroundColor: "primary.main",
             },
           }}
         >
@@ -305,8 +348,12 @@ export default function Dashboard() {
                     <TableRow key={assignment.id}>
                       <TableCell>{assignment.taskName}</TableCell>
                       <TableCell>{assignment.host}</TableCell>
-                      <TableCell>{format(parseISO(assignment.startDate), 'yyyy-MM-dd')}</TableCell>
-                      <TableCell>{format(parseISO(assignment.endDate), 'yyyy-MM-dd')}</TableCell>
+                      <TableCell>
+                        {format(parseISO(assignment.startDate), "yyyy-MM-dd")}
+                      </TableCell>
+                      <TableCell>
+                        {format(parseISO(assignment.endDate), "yyyy-MM-dd")}
+                      </TableCell>
                       <TableCell align="right">
                         <Button
                           startIcon={<EditIcon />}
@@ -324,12 +371,24 @@ export default function Dashboard() {
             <Dialog open={editDialogOpen} onClose={handleCloseDialog}>
               <DialogTitle>Edit Assignment</DialogTitle>
               <DialogContent>
-                <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box
+                  sx={{
+                    pt: 2,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 2,
+                  }}
+                >
                   <TextField
                     select
                     label="Assignee"
                     value={selectedMember.host}
-                    onChange={(e) => setSelectedMember({ ...selectedMember, host: e.target.value })}
+                    onChange={(e) =>
+                      setSelectedMember({
+                        ...selectedMember,
+                        host: e.target.value,
+                      })
+                    }
                     fullWidth
                   >
                     {members.map((member) => (
@@ -342,7 +401,12 @@ export default function Dashboard() {
                     label="Start Date"
                     type="date"
                     value={selectedMember.startDate}
-                    onChange={(e) => setSelectedMember({ ...selectedMember, startDate: e.target.value })}
+                    onChange={(e) =>
+                      setSelectedMember({
+                        ...selectedMember,
+                        startDate: e.target.value,
+                      })
+                    }
                     fullWidth
                     InputLabelProps={{ shrink: true }}
                   />
@@ -350,7 +414,12 @@ export default function Dashboard() {
                     label="End Date"
                     type="date"
                     value={selectedMember.endDate}
-                    onChange={(e) => setSelectedMember({ ...selectedMember, endDate: e.target.value })}
+                    onChange={(e) =>
+                      setSelectedMember({
+                        ...selectedMember,
+                        endDate: e.target.value,
+                      })
+                    }
                     fullWidth
                     InputLabelProps={{ shrink: true }}
                   />
@@ -358,7 +427,11 @@ export default function Dashboard() {
               </DialogContent>
               <DialogActions>
                 <Button onClick={handleCloseDialog}>Cancel</Button>
-                <Button onClick={handleSave} variant="contained" color="primary">
+                <Button
+                  onClick={handleSave}
+                  variant="contained"
+                  color="primary"
+                >
                   Save
                 </Button>
               </DialogActions>
@@ -380,7 +453,11 @@ export default function Dashboard() {
               </TableHead>
               <TableBody>
                 {assignments
-                  .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
+                  .sort(
+                    (a, b) =>
+                      new Date(b.startDate).getTime() -
+                      new Date(a.startDate).getTime()
+                  )
                   .map((assignment) => {
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
@@ -388,30 +465,36 @@ export default function Dashboard() {
                     const endDate = parseISO(assignment.endDate);
                     startDate.setHours(0, 0, 0, 0);
                     endDate.setHours(23, 59, 59, 999);
-                    
-                    let status = 'Upcoming';
+
+                    let status = "Upcoming";
                     if (today >= startDate && today <= endDate) {
-                      status = 'Current';
+                      status = "Current";
                     } else if (today > endDate) {
-                      status = 'Past';
+                      status = "Past";
                     }
 
                     return (
-                      <TableRow 
+                      <TableRow
                         key={assignment.id}
                         sx={{
-                          backgroundColor: 
-                            status === 'Current' ? 'rgba(76, 175, 80, 0.1)' :
-                            status === 'Past' ? 'rgba(158, 158, 158, 0.1)' :
-                            'inherit'
+                          backgroundColor:
+                            status === "Current"
+                              ? "rgba(76, 175, 80, 0.1)"
+                              : status === "Past"
+                              ? "rgba(158, 158, 158, 0.1)"
+                              : "inherit",
                         }}
                       >
-                    <TableCell>{assignment.taskName}</TableCell>
+                        <TableCell>{assignment.taskName}</TableCell>
                         <TableCell>{assignment.host}</TableCell>
-                    <TableCell>{format(parseISO(assignment.startDate), 'yyyy-MM-dd')}</TableCell>
-                    <TableCell>{format(parseISO(assignment.endDate), 'yyyy-MM-dd')}</TableCell>
+                        <TableCell>
+                          {format(parseISO(assignment.startDate), "yyyy-MM-dd")}
+                        </TableCell>
+                        <TableCell>
+                          {format(parseISO(assignment.endDate), "yyyy-MM-dd")}
+                        </TableCell>
                         <TableCell>{status}</TableCell>
-                  </TableRow>
+                      </TableRow>
                     );
                   })}
               </TableBody>
@@ -419,9 +502,7 @@ export default function Dashboard() {
           </TableContainer>
         )}
 
-        {selectedTab === 2 && (
-          <LogViewer />
-        )}
+        {selectedTab === 2 && <LogViewer />}
 
         <Dialog
           open={confirmDialogOpen}
@@ -432,13 +513,19 @@ export default function Dashboard() {
             <DialogContentText>
               Are you sure you want to send the current assignments to Slack?
             </DialogContentText>
-            <Box sx={{ mt: 2, whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
+            <Box
+              sx={{ mt: 2, whiteSpace: "pre-wrap", fontFamily: "monospace" }}
+            >
               {getSlackMessagePreview()}
             </Box>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSendToSlack} variant="contained" color="primary">
+            <Button
+              onClick={handleSendToSlack}
+              variant="contained"
+              color="primary"
+            >
               Send
             </Button>
           </DialogActions>
@@ -449,11 +536,14 @@ export default function Dashboard() {
           autoHideDuration={6000}
           onClose={() => setSnackbar({ ...snackbar, open: false })}
         >
-          <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+          <Alert
+            severity={snackbar.severity}
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+          >
             {snackbar.message}
           </Alert>
         </Snackbar>
       </Box>
     </Box>
   );
-} 
+}

@@ -86,7 +86,9 @@ function rotateMemberList(currentMemberId: number, members: Member[], rotations:
   const sortedMembers = [...members].sort((a, b) => a.id - b.id);
   const currentIndex = sortedMembers.findIndex(m => m.id === currentMemberId);
   if (currentIndex === -1) {
-    throw new Error('Current member not found');
+    const memberIds = sortedMembers.map(m => m.id).join(', ');
+    logger.error(`Current member not found. Looking for memberId: ${currentMemberId}, Available members: [${memberIds}]`);
+    throw new Error(`Current member not found: memberId ${currentMemberId} does not exist. Available members: [${memberIds}]`);
   }
   return sortedMembers[(currentIndex + rotations) % sortedMembers.length].id;
 }

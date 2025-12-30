@@ -18,6 +18,11 @@ async function migrateToEdgeConfig() {
     process.exit(1);
   }
 
+  if (!process.env.VERCEL_ACCESS_TOKEN) {
+    console.error('Error: VERCEL_ACCESS_TOKEN environment variable is not set');
+    process.exit(1);
+  }
+
   try {
     // Read local JSON files
     const members = await readJsonFile(path.join(process.cwd(), 'data', 'members.json'));
@@ -31,27 +36,29 @@ async function migrateToEdgeConfig() {
     }
 
     // Get Edge Config ID
-    const matches = process.env.EDGE_CONFIG.match(/\/([^\/]+)$/);
-    const configId = matches ? matches[1] : '';
+    const url = new URL(process.env.EDGE_CONFIG);
+    const configId = url.pathname.split('/')[1];
     if (!configId) {
       console.error('Error: Could not extract config ID from EDGE_CONFIG URL');
       process.exit(1);
     }
+    
+    console.log(`Migrating data to Edge Config: ${configId}`);
 
     // Migrate data to Edge Config
-        await axios.patch(
-          `https://api.vercel.com/v1/edge-config/${configId}/items`,
+    await axios.patch(
+      `https://api.vercel.com/v1/edge-config/${configId}/items`,
       {
         items: [
-          { key: 'members', value: members },
-          { key: 'tasks', value: tasks },
-          { key: 'taskAssignments', value: taskAssignments },
-          { key: 'systemConfigs', value: systemConfigs },
+          { operation: 'upsert', key: 'members', value: members },
+          { operation: 'upsert', key: 'tasks', value: tasks },
+          { operation: 'upsert', key: 'taskAssignments', value: taskAssignments },
+          { operation: 'upsert', key: 'systemConfigs', value: systemConfigs },
         ],
       },
       {
         headers: {
-          Authorization: `Bearer ${process.env.AUTH_BEARER_TOKEN}`,
+          Authorization: `Bearer ${process.env.VERCEL_ACCESS_TOKEN}`,
         },
       }
     );

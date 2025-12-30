@@ -1,40 +1,5 @@
 [
   {
-    "id": 1,
-    "slackMemberId": "UQ9TEQ1Q9",
-    "host": "Yichen"
-  },
-  {
-    "id": 2,
-    "slackMemberId": "U033H82RX45",
-    "host": "Yahui"
-  },
-  {
-    "id": 3,
-    "slackMemberId": "U028RJDJ1QD",
-    "host": "zhigang"
-  },
-  {
-    "id": 4,
-    "slackMemberId": "U05HB1VUUSZ",
-    "host": "guoqing"
-  },
-  {
-    "id": 5,
-    "slackMemberId": "U01D37NN5DX",
-    "host": "zhen"
-  },
-  {
-    "id": 6,
-    "slackMemberId": "U030FFUHK97",
-    "host": "jinglan"
-  },
-  {
-    "id": 7,
-    "slackMemberId": "U01DV0HGVRP",
-    "host": "ruixing"
-  },
-  {
     "id": 8,
     "slackMemberId": "U07LJ1U2398",
     "host": "Terri"
@@ -43,5 +8,30 @@
     "id": 10,
     "slackMemberId": "U091DL4HLTD",
     "host": "Taylor"
+  },
+  {
+    "host": "Harry",
+    "slackMemberId": "U04R8S45W0P",
+    "id": 13
+  },
+  {
+    "host": "Thuc Hoang",
+    "slackMemberId": "U08MVTJL0F2",
+    "id": 14
+  },
+  {
+    "host": "Tom Tang",
+    "slackMemberId": "U09J5HNCE22",
+    "id": 15
+  },
+  {
+    "host": "An",
+    "slackMemberId": "U07JQ2J0P52",
+    "id": 16
+  },
+  {
+    "host": "Kim",
+    "slackMemberId": "U09SX6HQEEB",
+    "id": 17
   }
 ]
