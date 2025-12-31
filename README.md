@@ -23,6 +23,7 @@ A team rotation management system built with Next.js and Vercel Edge Config. Thi
 - [Data Management](#data-management)
 - [API Reference](#api-reference)
 - [Deployment](#deployment)
+- [Documentation](#documentation)
 - [Troubleshooting](#troubleshooting)
 
 ---
@@ -63,6 +64,13 @@ npm run dev
 ---
 
 ## Features
+
+### 🔐 Authentication
+
+- **Login protection** - All routes protected with username/password authentication
+- **Secure sessions** - JWT tokens with HTTP-only cookies (30-day expiration)
+- **Simple setup** - Environment variable configuration
+- See [AUTHENTICATION_SETUP.md](./AUTHENTICATION_SETUP.md) for detailed setup instructions
 
 ### Member Management
 
@@ -251,6 +259,13 @@ EDGE_CONFIG=https://edge-config.vercel.com/ecfg_xxx?token=xxx
 # Vercel Access Token for write operations (Required)
 VERCEL_ACCESS_TOKEN=your_vercel_access_token_here
 
+# Authentication Credentials (Required)
+AUTH_USERNAME=your-username-here
+AUTH_PASSWORD=your-secure-password-here
+
+# JWT Secret for authentication (Required - generate a secure random string)
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production-make-it-long-and-random
+
 # Use Edge Config in Development Mode (Optional)
 # Set to 'true' to use Edge Config even in development mode
 # Set to 'false' or leave unset to use in-memory cache in development
@@ -262,6 +277,15 @@ NEXT_PUBLIC_USE_EDGE_CONFIG=true
 - ⚠️ **Do not use inline comments** in `.env.local` (comments must be on separate lines)
 - ✅ Each variable should be on its own line
 - ✅ No trailing spaces or comments after the values
+
+**🔐 Authentication Setup:**
+
+- Generate a secure JWT secret for production:
+  ```bash
+  openssl rand -base64 32
+  ```
+- See [AUTHENTICATION_SETUP.md](./AUTHENTICATION_SETUP.md) for detailed authentication documentation
+- Set your own secure username and password in environment variables
 
 #### Step 5: Initialize Data in Edge Config
 
@@ -1261,6 +1285,35 @@ git push origin main
    # Or contact your Git admin for help
    ```
 3. Update with new secret in production (via Edge Config)
+
+---
+
+## Documentation
+
+### 📚 Additional Guides
+
+This project includes comprehensive guides to help you understand and work with the codebase:
+
+| Guide | Description |
+|-------|-------------|
+| [NEXTJS_REACT_GUIDE.md](./NEXTJS_REACT_GUIDE.md) | Complete guide on how Next.js and React work together in this project |
+| [AUTHENTICATION_SETUP.md](./AUTHENTICATION_SETUP.md) | Detailed authentication setup and configuration guide |
+| [CODE_DOCUMENTATION.md](#code-documentation-for-developers) | Function-level documentation (see below) |
+
+### 📖 Recommended Reading Order for New Developers
+
+1. **Start here** → [NEXTJS_REACT_GUIDE.md](./NEXTJS_REACT_GUIDE.md)
+   - Understand the framework architecture
+   - Learn Server vs Client Components
+   - See how routing and API routes work
+
+2. **Then** → Read [Project Structure](#project-structure) and [Main Flows](#main-flows) sections in this README
+   - Understand the application structure
+   - Learn how data flows through the system
+
+3. **Finally** → Review the [Code Documentation](#code-documentation-for-developers) section below
+   - Deep dive into specific functions
+   - Understand business logic
 
 ---
 
