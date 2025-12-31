@@ -1,75 +1,73 @@
 'use client';
 
-import React, { useState } from 'react';
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-  Tooltip,
-  DialogContentText,
-} from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getMembers, createMember, updateMember, deleteMember } from '@/services/api';
+import { useState } from 'react';
+import { Box, Button } from '@mui/material';
+import { Add as AddIcon } from '@mui/icons-material';
+
+// Hooks
+import { useMembers, useSnackbar } from '@/hooks';
+
+// Shared Components
+import { PageHeader, ConfirmDialog, SnackbarNotification } from '@/components/shared';
+
+// Feature Components
+import { MembersTable, MemberFormDialog } from '@/components/features/members';
+
+// Types
 import { Member } from '@/types';
 
-export default function Members() {
-  const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
+/**
+ * Members Page
+ * 
+ * Page for managing team members (CRUD operations).
+ * Uses custom hooks for data fetching and feature components for UI.
+ */
+export default function MembersPage() {
+  // Dialog states
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Partial<Member> | null>(null);
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
 
-  const { data: members = [] } = useQuery<Member[]>({
-    queryKey: ['members'],
-    queryFn: getMembers,
-  });
+  // Custom hooks
+  const {
+    members,
+    createMemberMutation,
+    updateMemberMutation,
+    deleteMemberMutation,
+  } = useMembers();
 
-  const createMutation = useMutation({
-    mutationFn: createMember,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['members'] });
-      handleClose();
-    },
-  });
+  const { snackbar, showSuccess, showError, closeSnackbar } = useSnackbar();
 
-  const updateMutation = useMutation({
-    mutationFn: updateMember,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['members'] });
-      handleClose();
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteMember,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['members'] });
-      handleDeleteDialogClose();
-    },
-  });
-
-  const handleOpen = (member?: Member) => {
+  // Handlers
+  const handleOpenForm = (member?: Member) => {
     setEditingMember(member || { host: '', slackMemberId: '' });
-    setOpen(true);
+    setFormDialogOpen(true);
   };
 
-  const handleClose = () => {
+  const handleCloseForm = () => {
     setEditingMember(null);
-    setOpen(false);
+    setFormDialogOpen(false);
+  };
+
+  const handleSave = async (member: Partial<Member>) => {
+    try {
+      if (!member.id) {
+        // Create new member
+        await createMemberMutation.mutateAsync({
+          host: member.host!,
+          slackMemberId: member.slackMemberId!,
+        });
+        showSuccess('Member created successfully');
+      } else {
+        // Update existing member
+        await updateMemberMutation.mutateAsync(member as Member);
+        showSuccess('Member updated successfully');
+      }
+      handleCloseForm();
+    } catch (error) {
+      showError('Failed to save member');
+    }
   };
 
   const handleDeleteClick = (member: Member) => {
@@ -77,128 +75,74 @@ export default function Members() {
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteDialogClose = () => {
-    setMemberToDelete(null);
-    setDeleteDialogOpen(false);
-  };
-
-  const handleDelete = () => {
+  const handleDeleteConfirm = async () => {
     if (memberToDelete) {
-      deleteMutation.mutate(memberToDelete.id);
+      try {
+        await deleteMemberMutation.mutateAsync(memberToDelete.id);
+        showSuccess('Member deleted successfully');
+        setDeleteDialogOpen(false);
+        setMemberToDelete(null);
+      } catch (error) {
+        showError('Failed to delete member');
+      }
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingMember) return;
-
-    if (!editingMember.id) {
-      createMutation.mutate({
-        host: editingMember.host!,
-        slackMemberId: editingMember.slackMemberId!,
-      });
-    } else {
-      updateMutation.mutate(editingMember as Member);
-    }
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setMemberToDelete(null);
   };
 
   return (
     <Box p={3}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">Team Members</Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpen()}
-        >
-          Add Member
-        </Button>
-      </Box>
+      {/* Header */}
+      <PageHeader
+        title="Team Members"
+        actions={
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpenForm()}
+          >
+            Add Member
+          </Button>
+        }
+      />
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Slack ID</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {members?.map((member) => (
-              <TableRow key={member.id}>
-                <TableCell>{member.host}</TableCell>
-                <TableCell>{member.slackMemberId}</TableCell>
-                <TableCell align="right">
-                  <Tooltip title="Edit">
-                    <IconButton onClick={() => handleOpen(member)}>
-                      <EditIcon />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete">
-                    <IconButton onClick={() => handleDeleteClick(member)} color="error">
-                      <DeleteIcon />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      {/* Members Table */}
+      <MembersTable
+        members={members}
+        onEdit={handleOpenForm}
+        onDelete={handleDeleteClick}
+      />
 
-      {/* Add/Edit Dialog */}
-      <Dialog open={open} onClose={handleClose}>
-        <form onSubmit={handleSubmit}>
-          <DialogTitle>{editingMember?.id ? 'Edit Member' : 'Add Member'}</DialogTitle>
-          <DialogContent>
-            <Box sx={{ pt: 2 }}>
-              <TextField
-                autoFocus
-                margin="dense"
-                label="Name"
-                fullWidth
-                value={editingMember?.host || ''}
-                onChange={(e) =>
-                  setEditingMember((prev) => ({ ...prev!, host: e.target.value }))
-                }
-              />
-              <TextField
-                margin="dense"
-                label="Slack ID"
-                fullWidth
-                value={editingMember?.slackMemberId || ''}
-                onChange={(e) =>
-                  setEditingMember((prev) => ({ ...prev!, slackMemberId: e.target.value }))
-                }
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button type="submit" variant="contained" color="primary">
-              {editingMember?.id ? 'Save' : 'Add'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
+      {/* Form Dialog */}
+      <MemberFormDialog
+        open={formDialogOpen}
+        member={editingMember}
+        onSave={handleSave}
+        onClose={handleCloseForm}
+      />
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onClose={handleDeleteDialogClose}>
-        <DialogTitle>Delete Member</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete {memberToDelete?.host}? This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDeleteDialogClose}>Cancel</Button>
-          <Button onClick={handleDelete} color="error" variant="contained">
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        title="Delete Member"
+        message={`Are you sure you want to delete ${memberToDelete?.host}? This action cannot be undone.`}
+        confirmLabel="Delete"
+        confirmColor="error"
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
+
+      {/* Snackbar */}
+      <SnackbarNotification
+        open={snackbar.open}
+        message={snackbar.message}
+        severity={snackbar.severity}
+        onClose={closeSnackbar}
+      />
     </Box>
   );
-} 
+}

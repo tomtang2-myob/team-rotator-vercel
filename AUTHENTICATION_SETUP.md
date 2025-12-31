@@ -33,6 +33,64 @@ JWT_SECRET=your-super-secret-jwt-key-change-this-in-production-make-it-long-and-
 - Never commit real credentials to git
 - Use different secrets for development and production
 
+### 🔐 What is JWT_SECRET?
+
+`JWT_SECRET` is a **secret key** used to **sign and verify JSON Web Tokens (JWT)**. Think of it like a special password that only your server knows.
+
+**Purpose:**
+
+1. **Token Signing (Creating Tokens)** - When a user logs in, the server creates a JWT token and signs it with `JWT_SECRET`. This signature proves the token is legitimate and hasn't been tampered with.
+
+2. **Token Verification (Checking Tokens)** - When a user accesses protected pages, the server verifies the token using the same `JWT_SECRET` to ensure it's authentic.
+
+**Security Analogy:**
+
+Think of JWT like a **sealed envelope**:
+
+```
+Without JWT_SECRET:
+┌─────────────────────────────────┐
+│ Username: user123               │
+│ Expires: 2025-01-30             │
+│ [Anyone can read and modify]    │
+└─────────────────────────────────┘
+❌ Not secure - anyone can forge tokens!
+
+With JWT_SECRET:
+┌─────────────────────────────────┐
+│ Username: user123               │
+│ Expires: 2025-01-30             │
+│ ─────────────────────────────── │
+│ Signature: 🔒 (signed with      │
+│            JWT_SECRET)           │
+└─────────────────────────────────┘
+✅ Secure - only your server can create/verify!
+```
+
+**Why It's Critical:**
+
+| Without JWT_SECRET | With JWT_SECRET |
+|-------------------|-----------------|
+| ❌ Anyone could create fake tokens | ✅ Only your server can create valid tokens |
+| ❌ Users could modify their tokens | ✅ Tampering is detected immediately |
+| ❌ Attackers could impersonate users | ✅ Users can't forge authentication |
+| ❌ No way to verify authenticity | ✅ Token integrity is guaranteed |
+
+**Best Practices:**
+
+```bash
+# ❌ WEAK - Never use simple secrets
+JWT_SECRET=secret123
+
+# ✅ STRONG - Use long, random strings
+JWT_SECRET=vK/9xR3nP2mZ8wT5qL1hN4jY7sA0dF3gH6kJ9mN2bV4cX8zS5qW1
+
+# Generate a secure secret:
+openssl rand -base64 32
+```
+
+**Key Point:** If `JWT_SECRET` is compromised, attackers can forge authentication tokens and impersonate any user. Keep it secret and secure!
+
 ### 2. Add to Vercel (Production)
 
 When deploying to Vercel, add the same environment variables:
@@ -159,13 +217,28 @@ For multiple users, you would need to:
 ### Redirect Loop
 
 - Clear your browser cookies for `localhost:3000`
-- Verify JWT_SECRET is set
+- Verify JWT_SECRET is set in `.env.local`
+- Restart the dev server after adding JWT_SECRET
 
 ### Still Can Access Without Login
 
 - Check that `src/app/layout.tsx` has the authentication check
 - Verify `/api/auth/verify` endpoint is working
 - Check browser console for errors
+- Ensure JWT_SECRET matches between login and verification
+
+### Authentication Randomly Fails
+
+- **Problem:** JWT_SECRET might have changed between deployments
+- **Solution:** Use the same JWT_SECRET across all environments
+- **Check:** Verify JWT_SECRET in Vercel matches your local `.env.local` (for testing)
+- **Note:** Changing JWT_SECRET invalidates all existing tokens (users must re-login)
+
+### Users Keep Getting Logged Out
+
+- **Problem:** Token expiration is too short or JWT_SECRET keeps changing
+- **Check:** Verify TOKEN_EXPIRATION in `src/lib/auth.ts` (default: 30 days)
+- **Check:** Ensure JWT_SECRET is consistent and not changing on each deployment
 
 ### Cron Job Not Working
 
@@ -216,6 +289,63 @@ If multiple people need access:
   maxAge: 30 * 24 * 60 * 60,               // 30 days
   path: '/',                                // Available on all routes
 }
+```
+
+### How JWT_SECRET is Used in Code
+
+**Creating a Token (Login):**
+
+```typescript
+// src/lib/auth.ts
+export async function createToken(username: string): Promise<string> {
+  const secret = getJwtSecret(); // ← Gets JWT_SECRET
+  
+  const token = await new SignJWT({ username })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime(Math.floor(Date.now() / 1000) + TOKEN_EXPIRATION)
+    .sign(secret);  // ← Signs token with JWT_SECRET
+  
+  return token;
+}
+```
+
+**Verifying a Token (Every Request):**
+
+```typescript
+// src/lib/auth.ts
+export async function verifyToken(token: string): Promise<{ username: string } | null> {
+  try {
+    const secret = getJwtSecret(); // ← Gets JWT_SECRET
+    const { payload } = await jwtVerify(token, secret); // ← Verifies with JWT_SECRET
+    
+    return { username: payload.username as string };
+  } catch (error) {
+    return null; // Invalid token
+  }
+}
+```
+
+**Flow:**
+
+```
+1. User Login
+   ├─ Validates AUTH_USERNAME & AUTH_PASSWORD
+   ├─ Creates JWT token with user data
+   ├─ SIGNS token with JWT_SECRET ← Creates signature
+   └─ Stores signed token in HTTP-only cookie
+
+2. Accessing Protected Page
+   ├─ Browser sends cookie with token
+   ├─ Server extracts token from cookie
+   ├─ VERIFIES token signature with JWT_SECRET ← Checks authenticity
+   ├─ If signature valid → Allow access
+   └─ If signature invalid → Redirect to login
+
+3. Security Check
+   ├─ Token modified? → Signature won't match → Denied
+   ├─ Token expired? → Timestamp check → Denied
+   └─ Token valid? → Signature matches → Allowed
 ```
 
 ### Authentication Flow

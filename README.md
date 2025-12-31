@@ -159,9 +159,7 @@ team-rotator-vercel/
 │   │   │   ├── members/          # Member CRUD operations
 │   │   │   └── tasks/            # Task CRUD operations
 │   │   │
-│   │   ├── components/           # React components
-│   │   │   └── LogViewer.tsx     # System log viewer
-│   │   │
+│   │   ├── login/                # Login page
 │   │   ├── members/              # Member management page
 │   │   ├── settings/             # Settings page
 │   │   ├── tasks/                # Task management page
@@ -169,8 +167,36 @@ team-rotator-vercel/
 │   │   ├── layout.tsx            # Root layout
 │   │   └── globals.css           # Global styles
 │   │
-│   ├── components/               # Shared UI components
-│   │   └── ui/                   # shadcn/ui components
+│   ├── components/               # Reusable components (organized by type)
+│   │   ├── features/             # Feature-specific components
+│   │   │   ├── dashboard/        # Dashboard components
+│   │   │   │   ├── AssignmentsTable.tsx
+│   │   │   │   ├── HistoryTable.tsx
+│   │   │   │   ├── AssignmentEditDialog.tsx
+│   │   │   │   └── ...
+│   │   │   ├── members/          # Members page components
+│   │   │   │   ├── MembersTable.tsx
+│   │   │   │   └── MemberFormDialog.tsx
+│   │   │   └── tasks/            # Tasks page components
+│   │   │       ├── TasksTable.tsx
+│   │   │       └── TaskFormDialog.tsx
+│   │   ├── shared/               # Shared reusable components
+│   │   │   ├── ConfirmDialog.tsx
+│   │   │   ├── LoadingSpinner.tsx
+│   │   │   ├── PageHeader.tsx
+│   │   │   └── ...
+│   │   ├── client/               # Client components ('use client')
+│   │   │   └── LogViewer.tsx
+│   │   ├── server/               # Server components
+│   │   ├── ui/                   # UI library (shadcn/ui)
+│   │   └── README.md             # Component guidelines
+│   │
+│   ├── hooks/                    # Custom React hooks
+│   │   ├── useMembers.ts         # Member data management
+│   │   ├── useTasks.ts           # Task data management
+│   │   ├── useAssignments.ts     # Assignment data management
+│   │   ├── useSnackbar.ts        # Snackbar notifications
+│   │   └── README.md             # Hooks documentation
 │   │
 │   ├── lib/                      # Core business logic
 │   │   ├── db.ts                 # Edge Config database layer
@@ -1298,6 +1324,7 @@ This project includes comprehensive guides to help you understand and work with 
 |-------|-------------|
 | [NEXTJS_REACT_GUIDE.md](./NEXTJS_REACT_GUIDE.md) | Complete guide on how Next.js and React work together in this project |
 | [AUTHENTICATION_SETUP.md](./AUTHENTICATION_SETUP.md) | Detailed authentication setup and configuration guide |
+| [src/components/README.md](./src/components/README.md) | Component guidelines and best practices |
 | [CODE_DOCUMENTATION.md](#code-documentation-for-developers) | Function-level documentation (see below) |
 
 ### 📖 Recommended Reading Order for New Developers
@@ -1307,13 +1334,21 @@ This project includes comprehensive guides to help you understand and work with 
    - Learn Server vs Client Components
    - See how routing and API routes work
 
-2. **Then** → Read [Project Structure](#project-structure) and [Main Flows](#main-flows) sections in this README
+2. **Component Architecture** → [src/components/README.md](./src/components/README.md) and [src/hooks/README.md](./src/hooks/README.md)
+   - Visual guide to component organization
+   - Learn when to use client vs server components
+   - Understand the component directory structure
+   - Custom hooks documentation
+
+3. **Application Structure** → Read [Project Structure](#project-structure) and [Main Flows](#main-flows) sections in this README
    - Understand the application structure
    - Learn how data flows through the system
+   - See how different parts connect
 
-3. **Finally** → Review the [Code Documentation](#code-documentation-for-developers) section below
-   - Deep dive into specific functions
+4. **Deep Dive** → Review the [Code Documentation](#code-documentation-for-developers) section below
+   - Function-level documentation
    - Understand business logic
+   - API reference
 
 ---
 

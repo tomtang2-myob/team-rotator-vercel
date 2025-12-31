@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +11,24 @@ interface LogEntry {
   level: 'info' | 'error' | 'warn';
 }
 
+/**
+ * LogViewer Component
+ * 
+ * Displays system logs with auto-refresh functionality.
+ * This is a CLIENT COMPONENT because it:
+ * - Uses React hooks (useState, useEffect)
+ * - Handles user interactions (refresh, clear)
+ * - Fetches data dynamically from the browser
+ * 
+ * @example
+ * ```tsx
+ * import { LogViewer } from '@/components/client/LogViewer';
+ * 
+ * export default function DashboardPage() {
+ *   return <LogViewer />;
+ * }
+ * ```
+ */
 export function LogViewer() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -105,4 +125,5 @@ export function LogViewer() {
       </CardContent>
     </Card>
   );
-} 
+}
+
