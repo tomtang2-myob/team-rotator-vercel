@@ -19,6 +19,25 @@ import { isWorkingDay } from './holiday';
 import { logger } from './logger';
 
 /**
+ * Formats a Date object as YYYY-MM-DD using local date components.
+ * This avoids timezone conversion issues that occur with toISOString().
+ * 
+ * @param date - The date to format
+ * @returns Date string in YYYY-MM-DD format using local timezone
+ * 
+ * @example
+ * // In Australia (UTC+11), Jan 7 00:00 local time
+ * const date = new Date(2026, 0, 7, 0, 0, 0, 0);
+ * formatDateLocal(date); // Returns "2026-01-07" (not "2026-01-06")
+ */
+function formatDateLocal(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
  * Calculates the next occurrence of a specific day of the week after a given start date.
  * 
  * @param start - The starting date
@@ -264,7 +283,7 @@ function rotateMemberList(currentMemberId: number, members: Member[], rotations:
 async function shouldRotateToday(task: Task, today: Date): Promise<boolean> {
   // First check if it's a working day
   if (!(await isWorkingDay(today))) {
-    logger.info(`${today.toISOString().split('T')[0]} is not a working day, skipping rotation check`);
+    logger.info(`${formatDateLocal(today)} is not a working day, skipping rotation check`);
     return false;
   }
 
@@ -332,7 +351,7 @@ export async function updateTaskAssignments(): Promise<void> {
       Task: ${task.name} (${task.rotationRule})
       Current period: ${assignment.startDate} - ${assignment.endDate}
       Current member: ${assignment.memberId}
-      Today: ${today.toISOString().split('T')[0]}`);
+      Today: ${formatDateLocal(today)}`);
 
     // Check if rotation is needed today
     if (!(await shouldRotateToday(task, today))) {
@@ -355,13 +374,13 @@ export async function updateTaskAssignments(): Promise<void> {
     logger.info(`Updating assignment ${assignment.id}:
       Task: ${task.name}
       Current: ${assignment.startDate} - ${assignment.endDate} (Member: ${assignment.memberId})
-      New: ${newStartDate.toISOString().split('T')[0]} - ${newEndDate.toISOString().split('T')[0]} (Member: ${newMemberId})`);
+      New: ${formatDateLocal(newStartDate)} - ${formatDateLocal(newEndDate)} (Member: ${newMemberId})`);
 
     await updateTaskAssignment({
       ...assignment,
       memberId: newMemberId,
-      startDate: newStartDate.toISOString().split('T')[0],
-      endDate: newEndDate.toISOString().split('T')[0],
+      startDate: formatDateLocal(newStartDate),
+      endDate: formatDateLocal(newEndDate),
     });
   }
 }
@@ -471,7 +490,8 @@ export async function calculateEndDateFromStart(task: Task, startDate: Date): Pr
 export async function restartTaskAssignments(fromDate?: Date): Promise<void> {
   const startDate = fromDate || new Date();
   startDate.setHours(0, 0, 0, 0);
-  const startDateStr = startDate.toISOString().split('T')[0];
+  // Format date using local date components to avoid timezone conversion
+  const startDateStr = formatDateLocal(startDate);
   
   logger.info(`Kicking off new sprint from ${startDateStr}`);
   
@@ -497,14 +517,14 @@ export async function restartTaskAssignments(fromDate?: Date): Promise<void> {
     logger.info(`Kicking off assignment ${assignment.id}:
       Task: ${task.name} (${task.rotationRule})
       Old period: ${assignment.startDate} - ${assignment.endDate}
-      New period: ${startDateStr} - ${newEndDate.toISOString().split('T')[0]}
+      New period: ${startDateStr} - ${formatDateLocal(newEndDate)}
       Member: ${assignment.memberId} -> ${newMemberId}`);
 
     await updateTaskAssignment({
       ...assignment,
       memberId: newMemberId,
       startDate: startDateStr,
-      endDate: newEndDate.toISOString().split('T')[0],
+      endDate: formatDateLocal(newEndDate),
     });
   }
 
