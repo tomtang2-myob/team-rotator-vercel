@@ -15,6 +15,7 @@ import {
   HistoryTable,
   AssignmentEditDialog,
   SlackPreviewDialog,
+  SprintKickoffDialog,
   DashboardActions,
 } from '@/components/features/dashboard';
 
@@ -37,6 +38,7 @@ export default function Dashboard() {
   // Dialog states
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [slackDialogOpen, setSlackDialogOpen] = useState(false);
+  const [sprintKickoffDialogOpen, setSprintKickoffDialogOpen] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState<TaskAssignmentWithDetails | null>(null);
 
   // Custom hooks
@@ -47,6 +49,7 @@ export default function Dashboard() {
     error: assignmentsError,
     updateAssignmentMutation,
     updateRotationMutation,
+    sprintKickoffMutation,
     sendToSlackMutation,
   } = useAssignments();
 
@@ -89,6 +92,16 @@ export default function Dashboard() {
     }
   };
 
+  const handleSprintKickoff = async (startDate: string) => {
+    try {
+      await sprintKickoffMutation.mutateAsync(startDate);
+      setSprintKickoffDialogOpen(false);
+      showSuccess(`Sprint kicked off successfully from ${startDate}`);
+    } catch (error) {
+      showError('Failed to kick off sprint');
+    }
+  };
+
   const handleSendToSlack = async () => {
     try {
       await sendToSlackMutation.mutateAsync();
@@ -125,6 +138,7 @@ export default function Dashboard() {
           actions={
             <DashboardActions
               onUpdateRotation={handleUpdateRotation}
+              onKickOffSprint={() => setSprintKickoffDialogOpen(true)}
               onSendToSlack={() => setSlackDialogOpen(true)}
               isUpdating={updateRotationMutation.isPending}
             />
@@ -177,6 +191,13 @@ export default function Dashboard() {
           preview={slackPreview}
           onSend={handleSendToSlack}
           onClose={() => setSlackDialogOpen(false)}
+        />
+
+        <SprintKickoffDialog
+          open={sprintKickoffDialogOpen}
+          onKickoff={handleSprintKickoff}
+          onClose={() => setSprintKickoffDialogOpen(false)}
+          isLoading={sprintKickoffMutation.isPending}
         />
 
         {/* Snackbar */}

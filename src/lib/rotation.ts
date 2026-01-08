@@ -156,22 +156,40 @@ export async function calculateNextRotationDates(task: Task, fromDate: Date): Pr
       
       // Find the next target date (Friday) as the end date
       endDate = getNextDayAfterTargetDay(startDate, targetDay);
+      
+      // FIX: Ensure at least a reasonable work week duration
+      // If end date is less than 3 days away, move to next week's target day
+      // This ensures users get at least 3-5 working days
+      // Examples: Mon-Fri(4 days)✓, Tue-Fri(3 days)✓, Thu-Fri(1 day)✗ extends to next week
+      const daysDifference = Math.floor(
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      
+      if (daysDifference < 3) {
+        // End date is too soon (late week start), push to next week's target day
+        endDate.setDate(endDate.getDate() + 7);
+      }
       break;
     }
     case 'biweekly': {
       // For biweekly tasks (like English corner and Retro), start from the next working day after the current end date
       startDate = await findNextWorkingDay(fromDate);
       
-      // Find the next target date (Thursday or Wednesday)
-      endDate = getNextDayAfterTargetDay(startDate, targetDay);
+      // Calculate biweekly end date (2 weeks = 14 days)
+      // Find the target day in the current or next week
+      const currentDay = startDate.getDay();
+      let daysUntilTarget = (targetDay - currentDay + 7) % 7;
       
-      // If the next target date is earlier than the start date, need to look one more week ahead
-      if (endDate <= startDate) {
-        endDate.setDate(endDate.getDate() + 7);
+      // First target day occurrence
+      endDate = new Date(startDate);
+      
+      if (daysUntilTarget === 0) {
+        // We're already on the target day - add 2 weeks from today
+        endDate.setDate(startDate.getDate() + 14);
+      } else {
+        // Not on target day - find next target day, then add 2 weeks
+        endDate.setDate(startDate.getDate() + daysUntilTarget + 14);
       }
-      
-      // Add one more week to ensure a two-week cycle
-      endDate.setDate(endDate.getDate() + 7);
       break;
     }
     default:
@@ -346,4 +364,149 @@ export async function updateTaskAssignments(): Promise<void> {
       endDate: newEndDate.toISOString().split('T')[0],
     });
   }
+}
+
+/**
+ * Calculates the end date for a task starting from a given date.
+ * 
+ * This is used by restartTaskAssignments to calculate fresh rotation periods.
+ * Unlike calculateNextRotationDates which calculates from end of previous period,
+ * this calculates from the start date itself.
+ * 
+ * @param task - The task with rotation rule
+ * @param startDate - The start date for the new period
+ * @returns The end date for the rotation period
+ * 
+ * @example
+ * // Daily task - end date equals start date
+ * const task = { name: "English word", rotationRule: "daily" };
+ * const endDate = await calculateEndDateFromStart(task, new Date('2025-01-13'));
+ * // Returns: 2025-01-13
+ * 
+ * @example
+ * // Weekly task ending on Friday
+ * const task = { name: "Standup", rotationRule: "weekly_friday" };
+ * const endDate = await calculateEndDateFromStart(task, new Date('2025-01-13')); // Monday
+ * // Returns: 2025-01-17 (Friday of that week)
+ */
+export async function calculateEndDateFromStart(task: Task, startDate: Date): Promise<Date> {
+  if (task.rotationRule === 'daily') {
+    return new Date(startDate);
+  }
+
+  const parts = task.rotationRule.split('_');
+  if (!parts || parts.length !== 2) {
+    throw new Error(`Invalid rotation rule: ${task.rotationRule}`);
+  }
+
+  const [frequency, dayOfWeekStr] = parts;
+  const targetDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+    .indexOf(dayOfWeekStr.toLowerCase());
+
+  if (targetDay === -1) {
+    throw new Error(`Invalid day in rotation rule: ${dayOfWeekStr}`);
+  }
+
+  let endDate: Date;
+
+  switch (frequency) {
+    case 'weekly': {
+      // Find the next target day (or same day if today is that day)
+      endDate = getNextDayAfterTargetDay(startDate, targetDay);
+      // If the calculated date is too far ahead (more than 7 days), it means today IS the target day
+      // In that case, use today's date
+      const daysDiff = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysDiff > 6) {
+        endDate = new Date(startDate);
+      }
+      // FIX: Ensure at least a reasonable work week duration (similar to calculateNextRotationDates)
+      if (daysDiff < 3) {
+        // End date is too soon, push to next week's target day
+        endDate.setDate(endDate.getDate() + 7);
+      }
+      break;
+    }
+    case 'biweekly': {
+      // Calculate biweekly end date (2 weeks = 14 days)
+      const currentDay = startDate.getDay();
+      let daysUntilTarget = (targetDay - currentDay + 7) % 7;
+      
+      endDate = new Date(startDate);
+      
+      if (daysUntilTarget === 0) {
+        // We're already on the target day - add 2 weeks from today
+        endDate.setDate(startDate.getDate() + 14);
+      } else {
+        // Not on target day - find next target day, then add 2 weeks
+        endDate.setDate(startDate.getDate() + daysUntilTarget + 14);
+      }
+      break;
+    }
+    default:
+      throw new Error(`Unsupported frequency: ${frequency}`);
+  }
+  
+  return endDate;
+}
+
+/**
+ * Kicks off a new sprint from a specified date with fresh rotation periods.
+ * 
+ * This is used when sprints extend too long (e.g., 3 weeks due to public holidays)
+ * and you want to start a new sprint from a specific date.
+ * 
+ * Key differences from updateTaskAssignments:
+ * - updateTaskAssignments: Only rotates assignments that have ended
+ * - restartTaskAssignments: Resets ALL assignments to start from specified date
+ *   AND rotates to the next member
+ * 
+ * @param fromDate - The date to start the new sprint from (defaults to today)
+ * @returns Promise<void> - Completes when all assignments are updated
+ * 
+ * @example
+ * // Called by "Kick Off Sprint" button with a specific date
+ * await restartTaskAssignments(new Date('2026-01-13'));
+ * // All assignments now start from Jan 13, rotated to next members
+ */
+export async function restartTaskAssignments(fromDate?: Date): Promise<void> {
+  const startDate = fromDate || new Date();
+  startDate.setHours(0, 0, 0, 0);
+  const startDateStr = startDate.toISOString().split('T')[0];
+  
+  logger.info(`Kicking off new sprint from ${startDateStr}`);
+  
+  const [tasks, members, assignments] = await Promise.all([
+    getTasks(),
+    getMembers(),
+    getTaskAssignments(),
+  ]);
+
+  for (const assignment of assignments) {
+    const task = tasks.find(t => t.id === assignment.taskId);
+    if (!task) {
+      logger.warn(`Task not found for assignment ${assignment.id}`);
+      continue;
+    }
+
+    // Calculate new end date based on task's rotation rule, starting from the specified date
+    const newEndDate = await calculateEndDateFromStart(task, startDate);
+    
+    // Rotate to the next member
+    const newMemberId = rotateMemberList(assignment.memberId, members, 1);
+
+    logger.info(`Kicking off assignment ${assignment.id}:
+      Task: ${task.name} (${task.rotationRule})
+      Old period: ${assignment.startDate} - ${assignment.endDate}
+      New period: ${startDateStr} - ${newEndDate.toISOString().split('T')[0]}
+      Member: ${assignment.memberId} -> ${newMemberId}`);
+
+    await updateTaskAssignment({
+      ...assignment,
+      memberId: newMemberId,
+      startDate: startDateStr,
+      endDate: newEndDate.toISOString().split('T')[0],
+    });
+  }
+
+  logger.info('Sprint kickoff completed');
 } 

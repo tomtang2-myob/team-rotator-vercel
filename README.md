@@ -97,7 +97,7 @@ npm run dev
 - **Manual rotation trigger** via UI or API
 - **Slack notifications** for new assignments
 - View current and historical assignments
-- Holiday-aware rotation (respects Chinese holidays via API)
+- Holiday-aware rotation (respects Vietnam holidays via API)
 - Weekend-aware rotation (skips weekends automatically)
 
 ### System Management
@@ -393,7 +393,7 @@ The rotation system automatically manages task assignments based on rotation rul
    └─ Manual: User clicks "Update Rotation" button
 
 2. CHECK WORKING DAY
-   ├─ Query holiday API for Chinese holidays
+   ├─ Query holiday API for Vietnam holidays
    ├─ Check if current date is weekend (Sat/Sun)
    └─ Skip rotation if not a working day
 
@@ -594,7 +594,7 @@ Updating specific item...
 
 #### Testing Holiday Logic
 
-The app uses the [holiday-cn](https://github.com/NateScarlet/holiday-cn) API for Chinese holidays:
+The app uses the [Nager.Date](https://date.nager.at) API for Vietnam holidays:
 
 ```typescript
 // Test if a date is a working day
@@ -726,7 +726,7 @@ From `vercel.json`:
 **When it runs:**
 
 - ⏰ **Midnight UTC** (00:00) every day
-- 🇨🇳 **8:00 AM Beijing time** (UTC+8)
+- 🇻🇳 **7:00 AM Vietnam time** (UTC+7)
 - 🇺🇸 **5:00 PM PST** / **8:00 PM EST** (previous day)
 
 ### Complete Execution Flow
@@ -744,9 +744,9 @@ From `vercel.json`:
 2. CHECK WORKING DAY
    │
    ├─ Get today's date
-   ├─ Query Chinese Holiday API
+   ├─ Query Vietnam Holiday API
    │  └─ Check: Is today a holiday?
-   │     ├─ If holiday → Check if it's a working day
+   │     ├─ If holiday → Skip rotation (not a working day)
    │     └─ If not holiday → Check if it's weekend
    │
    └─ Result:
@@ -856,7 +856,7 @@ logger.info('Not a working day, skipping update')
 { message: "Not a working day, skipping update", skipped: true }
 ```
 
-#### **Scenario 3: Chinese Holiday (Working Day Makeup)**
+#### **Scenario 3: Vietnam Public Holiday**
 
 ```javascript
 // Saturday, February 1, 2026 (makeup working day)
@@ -1003,7 +1003,7 @@ The cron job respects these settings:
 | Setting            | Value               | Description                                                  |
 | ------------------ | ------------------- | ------------------------------------------------------------ |
 | **Timeout**        | 60 seconds          | Maximum execution time                                       |
-| **Holiday Source** | Chinese Holiday API | From [holiday-cn](https://github.com/NateScarlet/holiday-cn) |
+| **Holiday Source** | Vietnam Holiday API | From [Nager.Date](https://date.nager.at)                     |
 | **Slack Webhook**  | System Config       | Configured in Settings page                                  |
 | **Rotation Logic** | Task rotation rules | daily/weekly/biweekly                                        |
 | **Member Order**   | Sorted by ID        | Ascending order (8, 10, 13, 14, 15, 16)                      |
@@ -1016,7 +1016,7 @@ The cron job respects these settings:
 ✅ **Flexible** - Supports daily, weekly, and biweekly rotations  
 ✅ **Integrated** - Posts updates to Slack automatically  
 ✅ **Trackable** - Each execution has a unique request ID  
-✅ **Holiday-Aware** - Respects Chinese public holidays  
+✅ **Holiday-Aware** - Respects Vietnam public holidays  
 ✅ **Circular** - Members rotate in a continuous loop
 
 ### Important Notes
@@ -1230,7 +1230,7 @@ The cron job is configured in `vercel.json`:
 }
 ```
 
-This runs daily at midnight UTC (8:00 AM Beijing time).
+This runs daily at midnight UTC (7:00 AM Vietnam time / GMT+7).
 
 **To change the schedule:**
 

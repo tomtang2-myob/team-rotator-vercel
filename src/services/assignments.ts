@@ -23,7 +23,7 @@
  */
 
 import { getTaskAssignmentsWithDetails, getSystemConfigs, getMembers } from '@/lib/db';
-import { updateTaskAssignments } from '@/lib/rotation';
+import { updateTaskAssignments, restartTaskAssignments } from '@/lib/rotation';
 import { isWorkingDay } from '@/lib/holiday';
 import { Member } from '@/types';
 import { logger } from '@/lib/logger';
@@ -283,6 +283,39 @@ export async function sendNotificationOnly() {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error(`Error in sendNotificationOnly: ${errorMessage}`);
+    throw error;
+  }
+}
+
+/**
+ * Kicks off a new sprint from a specified date.
+ * 
+ * This is useful when:
+ * - Sprints extend too long (e.g., 3 weeks due to public holidays)
+ * - You want to start a new sprint from a specific date
+ * - Manual intervention is needed to fix schedule drift
+ * 
+ * Unlike updateAssignmentsOnly which only rotates expired assignments,
+ * this function resets ALL assignments to start from the specified date.
+ * 
+ * @param startDate - The date to start the new sprint from
+ * @returns Result object with success flag and message
+ * 
+ * @example
+ * // Kick off sprint from a specific date
+ * const result = await kickoffSprint(new Date('2026-01-13'));
+ * // Returns: { success: true, message: 'Sprint kicked off successfully from 2026-01-13' }
+ * 
+ * @see {@link restartTaskAssignments} Core restart logic
+ */
+export async function kickoffSprint(startDate: Date) {
+  try {
+    const dateStr = startDate.toISOString().split('T')[0];
+    logger.info(`Kicking off new sprint from ${dateStr}...`);
+    await restartTaskAssignments(startDate);
+    return { success: true, message: `Sprint kicked off successfully from ${dateStr}` };
+  } catch (error) {
+    console.error('Error in kickoffSprint:', error);
     throw error;
   }
 }

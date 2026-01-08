@@ -6,6 +6,7 @@ import {
   getAssignments,
   updateAssignment,
   triggerRotationUpdate,
+  triggerSprintKickoff,
   sendToSlack,
 } from '@/services/api';
 import { TaskAssignmentWithDetails, Member } from '@/types';
@@ -87,6 +88,14 @@ export function useAssignments() {
     },
   });
 
+  // Mutation for kicking off a new sprint from a specified date
+  const sprintKickoffMutation = useMutation({
+    mutationFn: (startDate: string) => triggerSprintKickoff(startDate),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assignments'] });
+    },
+  });
+
   // Mutation for sending to Slack
   const sendToSlackMutation = useMutation({
     mutationFn: sendToSlack,
@@ -104,6 +113,7 @@ export function useAssignments() {
     // Mutations
     updateAssignmentMutation,
     updateRotationMutation,
+    sprintKickoffMutation,
     sendToSlackMutation,
   };
 }

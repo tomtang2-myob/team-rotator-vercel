@@ -309,6 +309,32 @@ export const sendToSlack = async (): Promise<void> => {
   }
 };
 
+/**
+ * Kicks off a new sprint from a specified date.
+ * 
+ * This is used when sprints extend too long (e.g., 3 weeks due to holidays)
+ * and you want to reset the rotation schedule from a specific date.
+ * 
+ * Used by: "Kick Off Sprint" button on Dashboard
+ * 
+ * @param startDate - The date to start the new sprint from (YYYY-MM-DD format)
+ * @throws AxiosError if kickoff fails
+ * 
+ * @example
+ * // Button click handler
+ * const handleKickoff = async (date: string) => {
+ *   await triggerSprintKickoff(date);
+ *   refetch(); // Refresh assignments display
+ * };
+ */
+export const triggerSprintKickoff = async (startDate: string): Promise<void> => {
+  try {
+    await api.post('/assignments/restart-rotation', { startDate });
+  } catch (error) {
+    return handleApiError(error as AxiosError, 'triggerSprintKickoff');
+  }
+};
+
 // ============================================================================
 // SYSTEM CONFIG API - Frontend client for /api/config
 // ============================================================================
